@@ -20,3 +20,5 @@ libraries/zenon_modulo
 *.png
 .DS_Store
 *.map
+src/menhir_parser.automaton
+src/menhir_parser.conflicts

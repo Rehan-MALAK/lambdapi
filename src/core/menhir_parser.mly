@@ -221,6 +221,8 @@ let build_config : Pos.pos -> string -> string option -> Eval.config =
 %token R_PAR
 %token L_SQB
 %token R_SQB
+%token LEFTBRA
+%token RIGHTBRA
 %token EVAL
 %token INFER
 %token <bool> ASSERT
@@ -238,6 +240,7 @@ let build_config : Pos.pos -> string -> string option -> Eval.config =
 %type <Syntax.p_command> line
 
 %right ARROW FARROW
+%right ID COLON
 
 %%
 
@@ -266,6 +269,9 @@ line:
   | KW_DEF s=ID ps=param+ DEFEQ t=term DOT {
       make_pos $loc (P_definition(Terms.Public, false, make_pos $loc(s) s, ps, None, t))
     }
+  | KW_DEF s=ID ps=param+ COLON a=term DOT {
+      make_pos $loc (P_symbol(Terms.Public, Terms.Defin, make_pos $loc(s) s, ps, a))
+    }
   | KW_THM s=ID COLON a=term DEFEQ t=term DOT {
       make_pos $loc (P_definition(Terms.Public, true , make_pos $loc(s) s, [], Some(a), t))
     }
@@ -285,6 +291,12 @@ line:
       let q = make_pos $loc (P_query_normalize(t, c)) in
       make_pos $loc (P_query q)
     }
+  | EVAL LEFTBRA ps=param* RIGHTBRA t=term DOT {
+      let c = Eval.{strategy = SNF; steps = None} in
+      let abs_ps_t_loc = make_pos $loc (P_Abst(ps,t)) in
+      let q = make_pos $loc (P_query_normalize(abs_ps_t_loc,c)) in
+      make_pos $loc (P_query q)
+    }
   | INFER t=term DOT {
       let c = Eval.{strategy = NONE; steps = None} in
       let q = make_pos $loc (P_query_infer(t, c)) in
@@ -298,8 +310,22 @@ line:
       let q = make_pos $loc (P_query_assert(mf, P_assert_typing(t,a))) in
       make_pos $loc (P_query q)
     }
+  | mf=ASSERT LEFTBRA ps=param* RIGHTBRA t=aterm COLON a=term DOT {
+      let ps_t = make_pos $loc (P_Abst(ps,t)) in
+      let ps_a = make_pos $loc (P_Prod(ps,a)) in
+      let assert_type = P_assert_typing(ps_t,ps_a) in
+      let q = make_pos $loc (P_query_assert(mf, assert_type)) in
+      make_pos $loc (P_query q)
+    }
   | mf=ASSERT t=aterm EQUAL u=term DOT {
       let q = make_pos $loc (P_query_assert(mf, P_assert_conv(t,u))) in
+      make_pos $loc (P_query q)
+    }
+  | mf=ASSERT LEFTBRA ps=param* RIGHTBRA t=aterm EQUAL u=term DOT {
+      let ps_t = make_pos $loc (P_Abst(ps,t)) in
+      let ps_u = make_pos $loc (P_Abst(ps,u)) in
+      let assert_conv = P_assert_conv(ps_t,ps_u) in
+      let q = make_pos $loc (P_query_assert(mf, assert_conv)) in
       make_pos $loc (P_query q)
     }
   | r=REQUIRE    DOT {
@@ -315,8 +341,8 @@ eval_config:
   | L_SQB s1=ID COMMA s2=ID R_SQB { build_config (locate $loc) s1 (Some s2) }
 
 param:
-  | L_PAR id=ID COLON te=term R_PAR {
-      ([Some (make_pos $loc(id) id)], Some(te), false)
+  | L_PAR ids=ID+ COLON te=term R_PAR {
+      (List.map (fun id -> Some (make_pos $loc(ids) id)) ids, Some(te), false)
     }
 
 context_item:
@@ -347,9 +373,11 @@ term:
       let x = make_pos $loc(x) x in
       make_pos $loc (P_Prod([([Some x], Some(a), false)], b))
     }
-  | L_PAR x=ID COLON a=aterm R_PAR ARROW b=term {
-      let x = make_pos $loc(x) x in
-      make_pos $loc (P_Prod([([Some x], Some(a), false)], b))
+  | L_PAR xs=ID+ COLON a=aterm R_PAR ARROW b=term {
+      make_pos $loc (P_Prod(
+          List.map (fun x -> ([Some (make_pos $loc(xs) x)], Some(a), false)) xs
+        , b
+        ))
     }
   | a=term ARROW b=term {
       make_pos $loc (P_Impl(a, b))
