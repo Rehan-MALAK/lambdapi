@@ -13,6 +13,9 @@ let log_subj = log_subj.logger
 (** Representation of a substitution. *)
 type subst = tvar array * term array
 
+(** [forbids_untypable_lhs] *)
+let forbids_untypable_lhs : bool Stdlib.ref = Stdlib.ref false
+
 (** [subst_from_constrs cs] builds a //typing substitution// from the list  of
     constraints [cs]. The returned substitution is given by a couple of arrays
     [(xs,ts)] of the same length.  The array [xs] contains the variables to be
@@ -65,7 +68,7 @@ let build_meta_type : int -> term = fun k ->
     exception is raised in case of error. *)
 let check_rule : sym StrMap.t -> sym * pp_hint * rule Pos.loc -> unit =
     fun builtins (s,h,r) ->
-  if !log_enabled then log_subj "check_rule [%a]" pp_rule (s, h, r.elt);
+  if !log_enabled then log_subj (blu "check_rule [%a]") pp_rule (s, h, r.elt);
   (* We process the LHS to replace pattern variables by metavariables. *)
   let binder_arity = Bindlib.mbinder_arity r.elt.rhs in
   let metas = Array.make binder_arity None in
@@ -116,7 +119,11 @@ let check_rule : sym StrMap.t -> sym * pp_hint * rule Pos.loc -> unit =
   let rhs = Bindlib.msubst r.elt.rhs te_envs in
   (* Infer the type of the LHS and the constraints. *)
   match Typing.infer_constr builtins [] lhs with
-  | None                      -> wrn r.pos "Untypable LHS."
+  | None                      ->
+    if not (Stdlib.(!)forbids_untypable_lhs) then
+      fatal r.pos "Untypable LHS."
+    else
+      wrn r.pos "Untypable LHS."
   | Some(ty_lhs, lhs_constrs) ->
   if !log_enabled then
     begin
@@ -126,9 +133,12 @@ let check_rule : sym StrMap.t -> sym * pp_hint * rule Pos.loc -> unit =
     end;
   (* Turn constraints into a substitution and apply it. *)
   let (xs,ts) = subst_from_constrs lhs_constrs in
-  let p = Bindlib.box_pair (lift rhs) (lift ty_lhs) in
+  let lift_rhs = lift rhs in
+  let lift_ty_lhs = lift ty_lhs in
+  let p = Bindlib.box_pair lift_rhs lift_ty_lhs in
   let p = Bindlib.unbox (Bindlib.bind_mvar xs p) in
   let (rhs,ty_lhs) = Bindlib.msubst p ts in
+  log_subj (blu "%a") Mydebug.print_term rhs;
   (* Check that the RHS has the same type as the LHS. *)
   let to_solve = Infer.check [] rhs ty_lhs in
   if !log_enabled && to_solve <> [] then
@@ -164,4 +174,10 @@ let check_rule : sym StrMap.t -> sym * pp_hint * rule Pos.loc -> unit =
       fatal r.pos "Cannot instantiate all metavariables in rule [%a]."
         pp_rule (s,h,r.elt)
   in
+  (* Illustrate the difference between mydebug and mydebugocd *)
+  if !log_enabled then log_subj (blu "[RAPPEL] check_rule [%a]") pp_rule (s, h, r.elt);
+  log_subj "@\nlhs :@\n            %a@\n@?" Mydebug.print_sym s ;
+  log_subj "             %a@\n@?" Mydebug.print_rule_pos r ;
+  log_subj "@\nlhs :@\n            %a@\n@?" Mydebug.print_term lhs ;
+  log_subj "@\nrhs :@\n            %a@\n@?" Mydebug.print_term rhs ;
   Basics.iter_meta false f rhs
