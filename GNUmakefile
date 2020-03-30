@@ -4,11 +4,19 @@ EMACSDIR = $(shell opam var share)/emacs/site-lisp
 #### Compilation (binary, library and documentation) #########################
 
 .PHONY: all
-all: bin
+all: me
+
+.PHONY: me
+me:
+	@dune build --display verbose src/lambdapi.bc
 
 .PHONY: bin
 bin:
-	@dune build
+	@dune build --display verbose
+
+.PHONY: unit_tests
+unit_tests:
+	@dune runtest
 
 .PHONY: doc
 doc:
@@ -16,7 +24,7 @@ doc:
 
 #### Unit tests and sanity check #############################################
 
-LAMBDAPI     = dune exec -- lambdapi check --lib-root lib
+LAMBDAPI     = dune exec -- lambdapi
 OK_TESTFILES = $(sort $(wildcard tests/OK/*.dk tests/OK/*.lp))
 KO_TESTFILES = $(sort $(wildcard tests/KO/*.dk tests/KO/*.lp))
 
