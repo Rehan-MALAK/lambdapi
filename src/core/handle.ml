@@ -51,7 +51,7 @@ let handle_open : popt -> sig_state -> Path.t -> sig_state =
   let sign =
     try PathMap.find p !(Sign.loaded) with Not_found ->
       (* The signature has not been required... *)
-      fatal pos "Module [%a] has not been required." Path.pp p
+      fatal pos "Module [%a] has not been required." pp_path p
   in
   (* Open the module. *)
   open_sign ss sign
@@ -63,7 +63,7 @@ let handle_require : bool -> popt -> sig_state -> Path.t -> sig_state =
     fun b pos ss p ->
   (* Check that the module has not already been required. *)
   if PathMap.mem p !(ss.signature.sign_deps) then
-    fatal pos "Module [%a] is already required." Path.pp p;
+    fatal pos "Module [%a] is already required." pp_path p;
   (* Add the dependency (it was compiled already while parsing). *)
   ss.signature.sign_deps := PathMap.add p [] !(ss.signature.sign_deps);
   if b then handle_open pos ss p else ss
@@ -188,6 +188,15 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
       (* Actually add the symbol to the signature. *)
       let s = Sign.add_symbol ss.signature e Defin x a impl in
       out 3 "(symb) %s ≔ %a\n" s.sym_name pp t;
+(*
+      (* Add rule to the signature TODO *)
+      let add_rule (s,h,r) =
+        Sign.add_rule ss.signature s r.elt;
+        out 3 "(rule) %a\n" Print.pp_rule (s,h,r.elt)
+      in
+      let rule_of_def = {lhs = [] ; rhs = [] ; arith = 0 ; vars = []} in
+      add_rule s Terms.Nothing rule_of_def ;
+*)
       (* Also add its definition, if it is not opaque. *)
       if not op then s.sym_def := Some(t);
       ({ss with in_scope = StrMap.add x.elt (s, x.pos) ss.in_scope}, None)
