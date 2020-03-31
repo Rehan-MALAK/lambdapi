@@ -3,13 +3,9 @@
 open Extra
 open Timed
 open Console
-open Terms
 open Print
-open Sign
 open Pos
 open Files
-open Syntax
-open Scope
 
 (** [write_trees] tells whether graphviz files containing the representation
     of decision trees should be created. *)
@@ -17,13 +13,13 @@ let write_trees : bool Stdlib.ref = Stdlib.ref false
 
 (** [check_builtin_nat s] checks that the builtin symbol [s] for
    non-negative literals has a good type. *)
-let check_builtin_nat : popt -> sym StrMap.t -> string -> sym -> unit
+let check_builtin_nat : popt -> Terms.sym StrMap.t -> string -> Terms.sym -> unit
   = fun pos builtins s sym ->
   match s with
   | "+1" ->
      let builtin = Sign.builtin pos builtins in
-     let typ_0 = lift (!((builtin "0").sym_type)) in
-     let typ_s = Bindlib.unbox (_Impl typ_0 typ_0) in
+     let typ_0 = Terms.lift (!((builtin "0").sym_type)) in
+     let typ_s = Bindlib.unbox (Terms._Impl typ_0 typ_0) in
      if not (Eval.eq_modulo [] typ_s !(sym.sym_type)) then
        fatal pos "The type of [%s] is not of the form [%a]."
          sym.sym_name pp typ_s
@@ -37,13 +33,13 @@ let check_builtin_nat : popt -> sym StrMap.t -> string -> sym -> unit
 type proof_data =
   { pdata_stmt_pos : Pos.popt (* Position of the proof's statement.  *)
   ; pdata_p_state  : Proof.t  (* Initial proof state for the proof.  *)
-  ; pdata_tactics  : p_tactic list (* Tactics for the proof.         *)
-  ; pdata_finalize : sig_state -> Proof.t -> sig_state (* Finalizer. *)
+  ; pdata_tactics  : Syntax.p_tactic list (* Tactics for the proof.         *)
+  ; pdata_finalize : Scope.sig_state -> Proof.t -> Scope.sig_state (* Finalizer. *)
   ; pdata_term_pos : Pos.popt (* Position of the proof's terminator. *) }
 
 (** [handle_open pos ss p] handles the command [open p] with [ss] as the
    signature state. On success, an updated signature state is returned. *)
-let handle_open : popt -> sig_state -> Path.t -> sig_state =
+let handle_open : popt -> Scope.sig_state -> Path.t -> Scope.sig_state =
     fun pos ss p ->
   (* Obtain the signature corresponding to [m]. *)
   let sign =
@@ -52,12 +48,12 @@ let handle_open : popt -> sig_state -> Path.t -> sig_state =
       fatal pos "Module [%a] has not been required." Path.pp p
   in
   (* Open the module. *)
-  open_sign ss sign
+  Scope.open_sign ss sign
 
 (** [handle_require b pos ss p] handles the command [require p] (or [require
    open p] if b is true) with [ss] as the signature state. On success, an
    updated signature state is returned. *)
-let handle_require : bool -> popt -> sig_state -> Path.t -> sig_state =
+let handle_require : bool -> popt -> Scope.sig_state -> Path.t -> Scope.sig_state =
     fun b pos ss p ->
   (* Check that the module has not already been required. *)
   if PathMap.mem p !(ss.signature.sign_deps) then
@@ -69,7 +65,7 @@ let handle_require : bool -> popt -> sig_state -> Path.t -> sig_state =
 (** [handle_require_as pos ss p id] handles the command [require p as id] with
    [ss] as the signature state. On success, an updated signature state is
    returned. *)
-let handle_require_as : popt -> sig_state -> Path.t -> ident -> sig_state =
+let handle_require_as : popt -> Scope.sig_state -> Path.t -> Syntax.ident -> Scope.sig_state =
     fun pos ss p id ->
   let ss = handle_require false pos ss p in
   let aliases = StrMap.add id.elt p ss.aliases in
@@ -81,7 +77,7 @@ let handle_require_as : popt -> sig_state -> Path.t -> ident -> sig_state =
     This structure contains the list of the tactics to be executed, as well as
     the initial state of the proof.  The checking of the proof is then handled
     separately. Note that [Fatal] is raised in case of an error. *)
-let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
+let handle_cmd : Scope.sig_state -> Syntax.p_command -> Scope.sig_state * proof_data option =
   fun ss cmd ->
   let scope_basic exp = Scope.scope_term exp ss Env.empty in
   match cmd.elt with
@@ -99,7 +95,7 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
       if Sign.mem ss.signature x.elt then
         fatal x.pos "Symbol [%s] already exists." x.elt;
       (* Desugaring of arguments of [a]. *)
-      let a = if xs = [] then a else Pos.none (P_Prod(xs, a)) in
+      let a = if xs = [] then a else Pos.none (Syntax.P_Prod(xs, a)) in
       (* Obtaining the implicitness of arguments. *)
       let impl = Scope.get_implicitness a in
       (* We scope the type of the declaration. *)
@@ -119,7 +115,7 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
   | P_rules(rs)                ->
       (* Scoping and checking each rule in turn. *)
       let handle_rule pr =
-        let (s,_,_) as r = scope_rule ss pr in
+        let (s,_,_) as r = Scope.scope_rule ss pr in
         if !(s.sym_def) <> None then
           fatal pr.pos "Rewriting rules cannot be given for defined \
                         symbol [%s]." s.sym_name;
@@ -138,7 +134,7 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
       if Stdlib.(!write_trees) then
         begin
           let write_tree s =
-            let fname = String.concat Filename.dir_sep s.sym_path in
+            let fname = String.concat Filename.dir_sep s.Terms.sym_path in
             let fname = Printf.sprintf "%s.%s.gv" fname s.sym_name in
             Console.out 3 "Writing file [%s]\n" fname;
             Tree_graphviz.to_dot fname s
@@ -151,14 +147,14 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
       if Sign.mem ss.signature x.elt then
         fatal x.pos "Symbol [%s] already exists." x.elt;
       (* Desugaring of arguments and scoping of [t]. *)
-      let t = if xs = [] then t else Pos.none (P_Abst(xs, t)) in
+      let t = if xs = [] then t else Pos.none (Syntax.P_Abst(xs, t)) in
       let t = scope_basic e t in
       (* Desugaring of arguments and computation of argument impliciteness. *)
       let (ao, impl) =
         match ao with
         | None    -> (None, List.map (fun (_,_,impl) -> impl) xs)
         | Some(a) ->
-            let a = if xs = [] then a else Pos.none (P_Prod(xs,a)) in
+            let a = if xs = [] then a else Pos.none (Syntax.P_Prod(xs,a)) in
             (Some(a), Scope.get_implicitness a)
       in
       let ao = Option.map (scope_basic e) ao in
@@ -195,7 +191,7 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
       if Sign.mem ss.signature x.elt then
         fatal x.pos "Symbol [%s] already exists." x.elt;
       (* Desugaring of arguments of [a]. *)
-      let a = if xs = [] then a else Pos.none (P_Prod(xs, a)) in
+      let a = if xs = [] then a else Pos.none (Syntax.P_Prod(xs, a)) in
       (* Obtaining the implicitness of arguments. *)
       let impl = Scope.get_implicitness a in
       (* Scoping the type (statement) of the theorem. *)
@@ -223,7 +219,7 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
             if Proof.finished st then
               wrn cmd.pos "The proof is finished. You can use 'qed' instead.";
             (* Add a symbol corresponding to the proof, with a warning. *)
-            let s = Sign.add_symbol ss.signature e Const x a impl in
+            let s = Sign.add_symbol ss.Scope.signature e Const x a impl in
             out 3 "(symb) %s (admit)\n" s.sym_name;
             wrn cmd.pos "Proof admitted.";
             {ss with in_scope = StrMap.add x.elt (s, x.pos) ss.in_scope}
@@ -231,7 +227,7 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
             (* Check that the proof is indeed finished. *)
             if not (Proof.finished st) then
               begin
-                let _ = Tactics.handle_tactic ss st (none P_tac_print) in
+                let _ = Tactics.handle_tactic ss st (none Syntax.P_tac_print) in
                 fatal cmd.pos "The proof is not finished."
               end;
             (* Add a symbol corresponding to the proof. *)
@@ -252,7 +248,7 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
             let builtins = !(ss.signature.sign_builtins) in
             if StrMap.mem s builtins then
               fatal cmd.pos "Builtin [%s] already exists." s;
-            let (sym, _) = find_sym ~prt:true ~prv:true false ss qid in
+            let (sym, _) = Scope.find_sym ~prt:true ~prv:true false ss qid in
             check_builtin_nat cmd.pos builtins s sym;
             Rewrite.check_builtin cmd.pos builtins s sym;
             Sign.add_builtin ss.signature s sym;
@@ -261,13 +257,13 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
         | P_config_unop(unop)     ->
             let (s, _, qid) = unop in
             (* Define the unary operator [s]. *)
-            let (sym, _) = find_sym ~prt:true ~prv:true false ss qid in
+            let (sym, _) = Scope.find_sym ~prt:true ~prv:true false ss qid in
             Sign.add_unop ss.signature s (sym, unop);
             out 3 "(conf) new prefix [%s]\n" s; ss
         | P_config_binop(binop)   ->
             let (s, _, _, qid) = binop in
             (* Define the binary operator [s]. *)
-            let (sym, _) = find_sym ~prt:true ~prv:true false ss qid in
+            let (sym, _) = Scope.find_sym ~prt:true ~prv:true false ss qid in
             Sign.add_binop ss.signature s (sym, binop);
             out 3 "(conf) new infix [%s]\n" s; ss
         | P_config_ident(id)      ->
@@ -286,7 +282,7 @@ let too_long = Stdlib.ref infinity
     exception handling. In particular, the position of [cmd] is used on errors
     that lack a specific position. All exceptions except [Timeout] and [Fatal]
     are captured, although they should not occur. *)
-let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
+let handle_cmd : Scope.sig_state -> Syntax.p_command -> Scope.sig_state * proof_data option =
     fun ss cmd ->
   try
     let (tm, ss) = time (handle_cmd ss) cmd in

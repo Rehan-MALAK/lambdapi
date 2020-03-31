@@ -125,6 +125,12 @@ let rec print_term fmt (a_pos : Terms.term) =
   | TEnv(term_env,term_array) -> fprintf fmt "TEnv(%a,%a)" print_terms_env term_env (print_array print_term) term_array
   | Wild -> fprintf fmt "Wild"
   | TRef _term_option_ref -> fprintf fmt "TRef"
+(* NOT ALLOWED IN OCAMLDEBUG
+  | LLet(term1,term2,term_term_binder) -> let (_,unbinded_term) = Bindlib.unbind term_term_binder in
+      fprintf fmt "LLet(%a,%a,binder %a,%a)" print_term term1 print_term term2 print_bindlib_binder term_term_binder print_term unbinded_term
+   *)
+  | LLet(term1,term2,term_term_binder) ->
+      fprintf fmt "LLet(%a,%a,binder %a)" print_term term1 print_term term2 print_bindlib_binder term_term_binder
 
 and print_sym fmt (a_sym : Terms.sym) =
 (*   fprintf fmt "%s : %a" (print_name a_sym.sym_name) print_term (Timed.(!)(a_sym.sym_type)) *)
