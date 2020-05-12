@@ -1,4 +1,4 @@
-open Timed
+open Core.Timed
 open Core
 open Extra
 open Console
