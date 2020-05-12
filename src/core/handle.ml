@@ -18,7 +18,7 @@ let log_hndl = log_hndl.logger
 
 (* Register a check for the type of the builtin symbols "0" and "+1". *)
 let _ =
-  let register = Builtin.register_expected_type (Unif.eq []) pp_term in
+  let register = Builtin.register_expected_type (Unif.eq_noexn []) pp_term in
   let expected_zero_type ss _pos =
     try
       match !((StrMap.find "+1" ss.builtins).sym_type) with
@@ -133,6 +133,68 @@ let handle_require_as : popt -> sig_state -> Path.t -> ident -> sig_state =
   let path_map = PathMap.add p id.elt ss.path_map in
   {ss with aliases; path_map}
 
+(** [data_proof] returns the datas needed for the proof script check
+   TODO this is going to changes with the homogenization between
+   definition and theorem *)
+let data_proof x a cmd impl expo pos ts pe prop mstrat d typ unif =
+  (* Initialize proof state and save configuration data. *)
+  let st = Proof.init x a in
+  let sort_unif = Proof.sort_init a in
+  let st = {st with proof_goals = unif @ sort_unif @ typ} in
+  Console.push_state ();
+  (* Build proof checking data. *)
+  let finalize ss st =
+    Console.pop_state ();
+    match pe.elt with
+    | P_proof_abort ->
+      (* Just ignore the command, with a warning. *)
+      wrn cmd.pos "Proof aborted."; ss
+    | _ ->
+      let st = Tactics.solve st pos in
+      (* We check that no metavariable remains. *)
+      if Basics.has_metas true a then
+        begin
+          fatal_msg "The type of [%s] has unsolved metavariables.\n" x.elt;
+          fatal x.pos "We have %s : %a." x.elt pp_term a
+        end;
+      begin
+        match d with
+        | Some(t) ->
+          if Basics.has_metas true t then
+            begin
+              fatal_msg
+                "The definition of [%s] has unsolved metavariables.\n" x.elt;
+              fatal x.pos "We have %s : %a ≔ %a." x.elt pp_term a pp_term t
+            end;
+        | None -> ()
+      end;
+    match pe.elt with
+    | P_proof_abort -> assert false (* Handled above *)
+    | P_proof_admit ->
+      (* If the proof is finished, display a warning. *)
+      if Proof.finished st then
+        wrn cmd.pos "The proof is finished. You can use 'qed' instead.";
+      (* Add a symbol corresponding to the proof, with a warning. *)
+      out 3 "(symb) %s (admit)\n" x.elt;
+      wrn cmd.pos "Proof admitted.";
+      Sig_state.add_symbol ss expo prop mstrat x a impl d
+    | P_proof_qed   ->
+      (* Check that the proof is indeed finished. *)
+      if not (Proof.finished st) then
+        begin
+          let _ = Tactics.handle_tactic ss st (none P_tac_print) in
+          fatal cmd.pos "The proof is not finished."
+        end;
+      (* Add a symbol corresponding to the proof. *)
+      out 3 "(symb) %s (qed)\n" x.elt;
+      Sig_state.add_symbol ss expo prop mstrat x a impl d
+  in
+  let data =
+    { pdata_stmt_pos = pos ; pdata_p_state = st ; pdata_tactics = ts
+    ; pdata_finalize = finalize ; pdata_term_pos = pe.pos }
+  in
+  data
+
 (** [handle_cmd ss cmd] tries to handle the command [cmd] with [ss] as the
     signature state. On success, an updated signature state is returned.  When
     [cmd] leads to entering the proof mode,  a [proof_data] is also  returned.
@@ -152,7 +214,7 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
   | P_open(ps)                  ->
      let ps = List.map (List.map fst) ps in
      (List.fold_left (handle_open cmd.pos) ss ps, None)
-  | P_symbol(ms, x, xs, a) ->
+  | P_symbol(ms, x, xs, a, ts_pe) ->
       (* We check that [x] is not already used. *)
       if Sign.mem ss.signature x.elt then
         fatal x.pos "Symbol [%s] already exists." x.elt;
@@ -164,18 +226,15 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
       let impl = Scope.get_implicitness a in
       (* We scope the type of the declaration. *)
       let a = scope_basic expo a in
-      (* We check that [a] is typable by a sort. *)
-      Typing.sort_type [] a;
-      (* We check that no metavariable remains. *)
-      if Basics.has_metas true a then
-        begin
-          fatal_msg "The type of [%s] has unsolved metavariables.\n" x.elt;
-          fatal x.pos "We have %s : %a." x.elt pp_term a
-        end;
-      (* Actually add the symbol to the signature and the state. *)
-      out 3 "(symb) %s : %a\n" x.elt pp_term a;
-      (Sig_state.add_symbol ss expo prop mstrat x a impl None,
-       None)
+      let (ts,pe) = match ts_pe with
+        | None ->
+          let ts = [] in
+          let pe = Pos.make cmd.pos P_proof_qed in
+          (ts,pe)
+        | Some(ts,pe) -> (ts,pe)
+      in
+      let data = data_proof x a cmd impl expo x.pos ts pe prop mstrat None [] [] in
+      (ss, Some(data))
   | P_rules(rs)                ->
       (* Scoping and checking each rule in turn. *)
       let handle_rule r =
@@ -196,7 +255,7 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
       let syms = List.remove_phys_dups (List.map (fun (s, _) -> s) rs) in
       List.iter Tree.update_dtree syms;
       (ss, None)
-  | P_definition(ms, op, x, xs, ao, t) ->
+  | P_definition(ms, op, x, xs, ao, t, ts_pe) ->
       (* We check that [x] is not already used. *)
       if Sign.mem ss.signature x.elt then
         fatal x.pos "Symbol [%s] already exists." x.elt;
@@ -209,6 +268,7 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
                        in definitions.";
       (* Desugaring of arguments and scoping of [t]. *)
       let t = if xs = [] then t else Pos.none (P_Abst(xs, t)) in
+(*       let tt = t in *)
       let t = scope_basic expo t in
       (* Desugaring of arguments and computation of argument impliciteness. *)
       let (ao, impl) =
@@ -219,34 +279,35 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
             (Some(a), Scope.get_implicitness a)
       in
       let ao = Option.map (scope_basic expo) ao in
-      (* If a type [a] is given, then we check that [a] is typable by a sort
-         and that [t] has type [a]. Otherwise, we try to infer the type of
-         [t] and return it. *)
-      let a =
+      (* Get constraint list depending on whether a is given*)
+      let a,cs =
         match ao with
         | Some(a) ->
-            Typing.sort_type [] a;
-            if Typing.check [] t a then a else
-              fatal cmd.pos "The term [%a] does not have type [%a]."
-                pp_term t pp_term a
+          let cs = Infer.check [] t a in
+            a,cs
         | None    ->
-            match Typing.infer [] t with
-            | Some(a) -> a
-            | None    ->
-                fatal cmd.pos "Cannot infer the type of [%a]." pp_term t
+          Infer.infer [] t
       in
-      (* We check that no metavariable remains. *)
-      if Basics.has_metas true t || Basics.has_metas true a then
-        begin
-          fatal_msg "The definition of [%s] or its type \
-                     have unsolved metavariables.\n" x.elt;
-          fatal x.pos "We have %s : %a ≔ %a." x.elt pp_term a pp_term t
-        end;
-      (* Actually add the symbol to the signature. *)
-      out 3 "(symb) %s ≔ %a\n" x.elt pp_term t;
       let d = if op then None else Some(t) in
-      let ss = Sig_state.add_symbol ss expo Defin Eager x a impl d in
-      (ss, None)
+      let (ts,pe) = match ts_pe with
+        | None ->
+(*
+          let refine = Pos.make cmd.pos (P_tac_refine(tt)) in
+          let ts = [refine] in
+*)
+          let ts = [] in
+          let pe = Pos.make cmd.pos P_proof_qed in
+          (ts,pe)
+        | Some(ts,pe) -> (ts,pe)
+      in
+(*
+      let proof_term = fresh_meta ~name:x.elt a 0 in
+      let typ = Proof.typ_init proof_term in
+*)
+      let typ = [] in
+      let unif = Proof.unif_init cs in
+      let data = data_proof x a cmd impl expo x.pos ts pe Defin mstrat d typ unif in
+      (ss, Some(data))
   | P_theorem(ms, stmt, ts, pe) ->
       let (x,xs,a) = stmt.elt in
       (* We check that [x] is not already used. *)
@@ -265,47 +326,9 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
                        in theorems.";
       (* Scoping the type (statement) of the theorem. *)
       let a = scope_basic expo a in
-      (* Check that [a] is typable and that its type is a sort. *)
-      Typing.sort_type [] a;
-      (* We check that no metavariable remains in [a]. *)
-      if Basics.has_metas true a then
-        begin
-          fatal_msg "The type of [%s] has unsolved metavariables.\n" x.elt;
-          fatal x.pos "We have %s : %a." x.elt pp_term a
-        end;
-      (* Initialize proof state and save configuration data. *)
-      let st = Proof.init x a in
-      Console.push_state ();
-      (* Build proof checking data. *)
-      let finalize ss st =
-        Console.pop_state ();
-        match pe.elt with
-        | P_proof_abort ->
-            (* Just ignore the command, with a warning. *)
-            wrn cmd.pos "Proof aborted."; ss
-        | P_proof_admit ->
-            (* If the proof is finished, display a warning. *)
-            if Proof.finished st then
-              wrn cmd.pos "The proof is finished. You can use 'qed' instead.";
-            (* Add a symbol corresponding to the proof, with a warning. *)
-            out 3 "(symb) %s (admit)\n" x.elt;
-            wrn cmd.pos "Proof admitted.";
-            Sig_state.add_symbol ss expo Const Eager x a impl None
-        | P_proof_qed   ->
-            (* Check that the proof is indeed finished. *)
-            if not (Proof.finished st) then
-              begin
-                let _ = Tactics.handle_tactic ss st (none P_tac_print) in
-                fatal cmd.pos "The proof is not finished."
-              end;
-            (* Add a symbol corresponding to the proof. *)
-            out 3 "(symb) %s (qed)\n" x.elt;
-            Sig_state.add_symbol ss expo Const Eager x a impl None
-      in
-      let data =
-        { pdata_stmt_pos = stmt.pos ; pdata_p_state = st ; pdata_tactics = ts
-        ; pdata_finalize = finalize ; pdata_term_pos = pe.pos }
-      in
+      let proof_term = fresh_meta ~name:x.elt a 0 in
+      let typ = Proof.typ_init proof_term in
+      let data = data_proof x a cmd impl expo stmt.pos ts pe Const mstrat None typ [] in
       (ss, Some(data))
   | P_set(cfg)                 ->
       let ss =

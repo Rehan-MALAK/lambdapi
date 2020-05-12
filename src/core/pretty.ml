@@ -208,6 +208,7 @@ let pp_p_tactic : p_tactic pp = fun oc t ->
       out "why3%a" (Option.pp prover) p
   | P_tac_query(q)           -> pp_p_query oc q
   | P_tac_fail               -> out "fail"
+  | P_unif_solve             -> out "unif_solve" (* TODO *)
 
 let pp_command : p_command pp = fun oc cmd ->
   let out fmt = Format.fprintf oc fmt in
@@ -219,7 +220,7 @@ let pp_command : p_command pp = fun oc cmd ->
       out "require %a as %a" (pp_path cmd.pos) p (pp_path_elt i.pos) i.elt
   | P_open(ps)                      ->
       List.iter (out "open %a" (pp_path cmd.pos)) ps
-  | P_symbol(ms,s,args,a) ->
+  | P_symbol(ms,s,args,a,_) (* TODO *) ->
       out "@[<hov 2>%asymbol %a"
         (Format.pp_print_list pp_modifier) ms pp_ident s;
       List.iter (out " %a" pp_p_arg) args;
@@ -228,7 +229,7 @@ let pp_command : p_command pp = fun oc cmd ->
   | P_rules(r::rs)                  ->
       out "%a" (pp_p_rule true) r;
       List.iter (out "%a" (pp_p_rule false)) rs
-  | P_definition(ms,_,s,args,ao,t) ->
+  | P_definition(ms,_,s,args,ao,t,_) (* TODO *) ->
       out "@[<hov 2>%adefinition %a"
         (Format.pp_print_list pp_modifier) ms pp_ident s;
       List.iter (out " %a" pp_p_arg) args;

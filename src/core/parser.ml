@@ -193,6 +193,7 @@ let _rule_       = KW.create "rule"
 let _sequential_ = KW.create "sequential"
 let _set_        = KW.create "set"
 let _simpl_      = KW.create "simpl"
+let _solve_      = KW.create "solve"
 let _sym_        = KW.create "symmetry"
 let _symbol_     = KW.create "symbol"
 let _theorem_    = KW.create "theorem"
@@ -567,6 +568,7 @@ let parser tactic =
   | _why3_ s:string_lit?        -> Pos.in_pos _loc (P_tac_why3(s))
   | q:query                     -> Pos.in_pos _loc (P_tac_query(q))
   | _fail_                      -> Pos.in_pos _loc P_tac_fail
+  | _solve_                     -> Pos.in_pos _loc P_unif_solve
 
 (** [proof_end] is a parser for a proof terminator. *)
 let parser proof_end =
@@ -607,6 +609,9 @@ let parser statement =
 
 let parser proof =
   ts:tactic* e:proof_end -> (ts, Pos.in_pos _loc_e e)
+
+let parser keyword_proof =
+  _proof_ ts_pe:proof -> ts_pe
 
 (** [!require mp] can be used to require the compilation of a module [mp] when
     it is required as a dependency. This has the effect of importing notations
@@ -655,11 +660,13 @@ let parser cmd =
       -> List.iter (get_ops _loc) ps;
          P_open(ps)
   | mods:modifier* _symbol_ s:ident al:arg* ":" a:term
-      -> P_symbol(mods, s, al, a)
+      ts_pe:keyword_proof?
+      -> P_symbol(mods, s, al, a, ts_pe)
   | _rule_ r:rule rs:{_:_with_ rule}*
       -> P_rules(r::rs)
   | ms:modifier* _definition_ s:ident al:arg* ao:{":" term}? "≔" t:term
-      -> P_definition(ms,false,s,al,ao,t)
+        ts_pe:keyword_proof?
+      -> P_definition(ms,false,s,al,ao,t,ts_pe)
   | ms:modifier* st:statement (ts,pe):proof
       -> P_theorem(ms,st,ts,pe)
   | _set_ c:config
