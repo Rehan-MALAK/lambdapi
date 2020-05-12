@@ -471,14 +471,14 @@ and solve_aux : ctxt -> term -> term -> problem -> constr list =
 
   | (_          , _          ) -> add_to_unsolved ()
 
-(** [solve problem] attempts to solve [problem]. If there is
+(** [solve_noexn problem] attempts to solve [problem]. If there is
    no solution, the value [None] is returned. Otherwise [Some(cs)] is
    returned, where the list [cs] is a list of unsolved convertibility
    constraints. *)
-let solve : problem -> constr list option = fun p ->
+let solve_noexn : problem -> constr list option = fun p ->
   try Some (solve p) with Unsolvable -> None
 
-(** [eq c t u] tries to unify the terms [t] and [u] in context [c], by
+(** [eq_noexn c t u] tries to unify the terms [t] and [u] in context [c], by
    instantiating their metavariables. *)
-let eq : ctxt -> term -> term -> bool = fun c t u ->
-  solve {empty_problem with to_solve=[c,t,u]} = Some []
+let eq_noexn : ctxt -> term -> term -> bool = fun c t u ->
+  solve_noexn {empty_problem with to_solve=[c,t,u]} = Some []

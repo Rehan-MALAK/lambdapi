@@ -9,7 +9,7 @@ open Print
 (** [check ctx t a] tells whether [t] has type [a] in context [ctx]. *)
 let check : ctxt -> term -> term -> bool = fun ctx t a ->
   let to_solve = Infer.check ctx t a in
-  match solve {empty_problem with to_solve} with
+  match solve_noexn {empty_problem with to_solve} with
   | None     -> false
   | Some([]) -> true
   | Some(cs) ->
@@ -21,7 +21,7 @@ let check : ctxt -> term -> term -> bool = fun ctx t a ->
 let infer_constr : ctxt -> term -> (term * constr list) option =
   fun ctx t ->
   let (a, to_solve) = Infer.infer ctx t in
-  Option.map (fun cs -> (a, cs)) (solve {empty_problem with to_solve})
+  Option.map (fun cs -> (a, cs)) (solve_noexn {empty_problem with to_solve})
 
 (** [infer ctx t] tries to infer a type [a] for [t] in the context
    [ctx]. The function returns [Some(a)] in case of success, and [None]

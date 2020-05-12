@@ -250,7 +250,10 @@ line:
         | Some(_) -> ms
         | None -> make_pos Lexing.(dummy_pos, dummy_pos) (P_prop(Const)) :: ms
       in
-      make_pos $loc (P_symbol(ms, make_pos $loc(s) s, ps, a))
+      let t =
+        P_symbol(ms, make_pos $loc(s) s, ps, a, None)
+      in
+      make_pos $loc t
     }
   | ms=modifier* KW_DEF s=ID COLON a=term DOT
     {
@@ -262,45 +265,45 @@ line:
         | None -> make_pos Lexing.(dummy_pos, dummy_pos) (P_prop(Defin)) :: ms
       in
       let t =
-        P_symbol (ms, make_pos $loc(s) s, [], a)
+        P_symbol (ms, make_pos $loc(s) s, [], a, None)
       in
       make_pos $loc t
     }
   | ms=modifier* KW_DEF s=ID COLON a=term DEFEQ t=term DOT
     {
       let t =
-        P_definition (ms, false, make_pos $loc(s) s, [], Some(a), t)
+        P_definition (ms, false, make_pos $loc(s) s, [], Some(a), t, None)
       in
       make_pos $loc t
     }
   | ms=modifier* KW_DEF s=ID DEFEQ t=term DOT
     {
       let t = P_definition
-                (ms, false, make_pos $loc(s) s, [], None, t) in
+                (ms, false, make_pos $loc(s) s, [], None, t, None) in
       make_pos $loc t
     }
   | ms=modifier* KW_DEF s=ID ps=param+ COLON a=term DEFEQ t=term DOT
     {
       let t = P_definition
-                (ms, false, make_pos $loc(s) s, ps, Some(a), t) in
+                (ms, false, make_pos $loc(s) s, ps, Some(a), t, None) in
       make_pos $loc t
     }
   | ms=modifier* KW_DEF s=ID ps=param+ DEFEQ t=term DOT
     {
       let t = P_definition
-                (ms, false, make_pos $loc(s) s, ps, None, t) in
+                (ms, false, make_pos $loc(s) s, ps, None, t, None) in
       make_pos $loc t
     }
   | ms=modifier* KW_THM s=ID COLON a=term DEFEQ t=term DOT
     {
       let t = P_definition
-                (ms, true , make_pos $loc(s) s, [], Some(a), t) in
+                (ms, true , make_pos $loc(s) s, [], Some(a), t, None) in
       make_pos $loc t
     }
   | ms=modifier* KW_THM s=ID ps=param+ COLON a=term DEFEQ t=term DOT
     {
       let t = P_definition
-                (ms, true , make_pos $loc(s) s, ps, Some(a), t) in
+                (ms, true , make_pos $loc(s) s, ps, Some(a), t, None) in
       make_pos $loc t
     }
   | rs=rule+ DOT {

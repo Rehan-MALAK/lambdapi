@@ -11,6 +11,7 @@
   '("apply"
     "assume"
     "fail"
+    "solve"
     "focus"
     "print"
     "proofterm"
@@ -69,6 +70,7 @@ Indent by `lambdapi-indent-basic' in proofs, and 0 otherwise."
       (tactic ("apply" sterm)
               ("assume" sterm)
               ("fail")
+              ("solve")
               ("focus" ident)
               ("print")
               ("proofterm")
@@ -147,6 +149,7 @@ The default lexer is used because the syntax is primarily made of sexps."
     (`(:before . "focus") `(column . ,lambdapi-indent-basic))
     (`(:before . "print") `(column . ,lambdapi-indent-basic))
     (`(:before . "fail") `(column . ,lambdapi-indent-basic))
+    (`(:before . "solve") `(column . ,lambdapi-indent-basic))
 
     (`(:before . ,(or "admit" "abort" "qed")) '(column . 0))
     (`(:after . ,(or "admit" "abort" "qed")) '(column . 0))
@@ -165,7 +168,7 @@ The default lexer is used because the syntax is primarily made of sexps."
     (`(:after . "in") (smie-rule-parent))
     (`(:after . ,(or "symbol" "definition" "theorem")) lambdapi-indent-basic)
     (`(:after . ,(or "simpl" "rewrite" "assume" "apply" "refine"
-                     "why3" "reflexivity" "focus" "print" "fail"))
+                     "why3" "reflexivity" "focus" "print" "fail" "solve"))
      lambdapi-indent-basic)
 
     ;; Toplevel

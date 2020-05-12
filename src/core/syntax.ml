@@ -166,6 +166,8 @@ type p_tactic_aux =
   (** Print the current proof term (possibly containing open goals). *)
   | P_tac_why3 of string option
   (** Try to solve the current goal with why3. *)
+  | P_unif_solve
+  (** Apply default unification solving algorithm. *)
   | P_tac_query   of p_query
   (** Query. *)
   | P_tac_fail
@@ -214,11 +216,13 @@ type p_command_aux =
   | P_open       of p_module_path list
   (** Open statement. *)
   | P_symbol     of p_modifier loc list * ident * p_arg list * p_type
+                   * (p_tactic list * p_proof_end loc) option
   (** Symbol declaration. *)
   | P_rules      of p_rule list
   (** Rewriting rule declarations. *)
-  | P_definition of p_modifier loc list * bool * ident * p_arg list *
-                    p_type option * p_term
+  | P_definition of p_modifier loc list * bool * ident * p_arg list
+                    * p_type option * p_term 
+                    * (p_tactic list * p_proof_end loc) option
   (** Definition of a symbol (unfoldable). *)
   | P_theorem    of p_modifier loc list * p_statement * p_tactic list *
                     p_proof_end loc
@@ -360,12 +364,14 @@ let eq_p_command : p_command eq = fun c1 c2 ->
      List.equal (=) ps1 ps2
   | (P_require_as(p1,id1)  , P_require_as(p2,id2)              ) ->
      p1 = p2 && id1.elt = id2.elt
-  | (P_symbol(m1,s1,al1,a1), P_symbol(m2,s2,al2,a2)) ->
+  | (P_symbol(m1,s1,al1,a1,_), P_symbol(m2,s2,al2,a2,_)) ->
+    (* TODO *)
       m1 = m2 && eq_ident s1 s2 && eq_p_term a1 a2
       && List.equal eq_p_arg al1 al2
   | (P_rules(rs1)                , P_rules(rs2)                ) ->
       List.equal eq_p_rule rs1 rs2
-  | (P_definition(e1,b1,s1,l1,a1,t1), P_definition(e2,b2,s2,l2,a2,t2)) ->
+  | (P_definition(e1,b1,s1,l1,a1,t1,_), P_definition(e2,b2,s2,l2,a2,t2,_)) ->
+    (* TODO *)
       e1 = e2 && b1 = b2 && eq_ident s1 s2 && List.equal eq_p_arg l1 l2
       && Option.equal eq_p_term a1 a2 && eq_p_term t1 t2
   | (P_theorem(ex1,st1,ts1,e1)   , P_theorem(ex2,st2,ts2,e2)   ) ->
