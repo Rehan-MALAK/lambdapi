@@ -10,7 +10,7 @@
   ],
   "repository": {
     "commands": {
-      "match": "\\b(abort|admit|and|apply|as|assert|assertnot|assume|compute|constant|definition|focus|in|injective|let|open|print|private|proof|proofterm|protected|qed|refine|reflexivity|require|rewrite|rule|set|simpl|symmetry|symbol|theorem|type|TYPE|why3)\\b",
+      "match": "\\b(abort|admit|and|apply|as|assert|assertnot|assume|compute|constant|definition|focus|in|injective|let|open|print|private|begin|proofterm|protected|qed|refine|reflexivity|require|rewrite|rule|set|simpl|symmetry|symbol|theorem|type|TYPE|why3)\\b",
       "name": "keyword.control.lp"
     },
     "comments": {

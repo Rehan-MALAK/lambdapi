@@ -24,7 +24,7 @@
 (defconst lambdapi--queries '("set" "assert" "assertnot" "type" "compute")
   "Commands that can appear in proofs.")
 (defconst lambdapi--cmds
-  (append '("symbol" "theorem" "rule" "and" "definition" "proof" "require")
+  (append '("symbol" "theorem" "rule" "and" "definition" "begin" "require")
           lambdapi--queries)
   "Commands at top level.")
 
@@ -35,7 +35,7 @@ Indent by `lambdapi-indent-basic' in proofs, and 0 otherwise."
     (forward-line -1)
     (back-to-indentation)
     (cond
-     ((looking-at-p (regexp-opt (cons "proof" lambdapi--tactics)))
+     ((looking-at-p (regexp-opt (cons "begin" lambdapi--tactics)))
       `(column . ,lambdapi-indent-basic))
      ((looking-at-p (regexp-opt lambdapi--queries))
       ;; If the previous line is a query, indent similarly
@@ -101,9 +101,9 @@ Indent by `lambdapi-indent-basic' in proofs, and 0 otherwise."
                ("injective" symdec)
                ("open" ident)
                ("private" symdec)
-               ("proof" prfcontent "abort")
-               ("proof" prfcontent "admit")
-               ("proof" prfcontent "qed")
+               ("begin" prfcontent "abort")
+               ("begin" prfcontent "admit")
+               ("begin" prfcontent "qed")
                ("protected" symdec)
                ("require" ident "as" ident)
                ("require" ident)
@@ -162,8 +162,8 @@ The default lexer is used because the syntax is primarily made of sexps."
     (`(,(or :before :list-intro) . ,(or "≔" ":")) (smie-rule-separator kind))
     (`(:after . ,(or "≔" ":")) lambdapi-indent-basic)
 
-    (`(:list-intro . ,(or "with" "rule" "λ" "Π" "proof")) t)
-    (`(:after . "proof") lambdapi-indent-basic)
+    (`(:list-intro . ,(or "with" "rule" "λ" "Π" "begin")) t)
+    (`(:after . "begin") lambdapi-indent-basic)
     (`(:after . ,(or "rule" "with")) (* 2 lambdapi-indent-basic))
     (`(:after . "in") (smie-rule-parent))
     (`(:after . ,(or "symbol" "definition" "theorem")) lambdapi-indent-basic)
@@ -180,7 +180,7 @@ The default lexer is used because the syntax is primarily made of sexps."
     (`(:before . "open") '(column . 0))
     (`(:before . "definition") '(column . 0))
     (`(:before . "theorem") '(column . 0))
-    (`(:before . "proof") '(column . 0))
+    (`(:before . "begin") '(column . 0))
     (`(:before . "symbol") '(column . 0))
 
     (`(:before . ,(or "with" "rule")) '(column . 0))))

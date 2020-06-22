@@ -169,6 +169,7 @@ let _apply_      = KW.create "apply"
 let _as_         = KW.create "as"
 let _assert_     = KW.create "assert"
 let _assertnot_  = KW.create "assertnot"
+let _begin_      = KW.create "begin"
 let _compute_    = KW.create "compute"
 let _constant_   = KW.create "constant"
 let _definition_ = KW.create "definition"
@@ -181,7 +182,6 @@ let _let_        = KW.create "let"
 let _open_       = KW.create "open"
 let _print_      = KW.create "print"
 let _private_    = KW.create "private"
-let _proof_      = KW.create "proof"
 let _proofterm_  = KW.create "proofterm"
 let _protected_  = KW.create "protected"
 let _qed_        = KW.create "qed"
@@ -611,8 +611,8 @@ let parser statement =
 let parser proof =
   ts:tactic* e:proof_end -> (ts, Pos.in_pos _loc_e e)
 
-let parser keyword_proof =
-  _proof_ ts_pe:proof -> ts_pe
+let parser keyword_begin =
+  _begin_ ts_pe:proof -> ts_pe
 
 (** [!require mp] can be used to require the compilation of a module [mp] when
     it is required as a dependency. This has the effect of importing notations
@@ -661,14 +661,14 @@ let parser cmd =
       -> List.iter (get_ops _loc) ps;
          P_open(ps)
   | mods:modifier* _symbol_ s:ident al:arg* ":" a:term
-      ts_pe:keyword_proof?
+      ts_pe:keyword_begin?
       -> P_symbol(mods, s, al, a, ts_pe)
   | _rule_ r:rule rs:{_:_with_ rule}*
       -> P_rules(r::rs)
   | ms:modifier* _definition_ st:statement t:{"≔" term}?
-        ts_pe:keyword_proof?
+        ts_pe:keyword_begin?
       -> P_definition(ms,false,st,t   ,ts_pe      )
-  | ms:modifier* _theorem_ st:statement ts_pe:keyword_proof
+  | ms:modifier* _theorem_ st:statement ts_pe:keyword_begin
       -> P_definition(ms,true ,st,None,Some(ts_pe))
   | _set_ c:config
       -> P_set(c)

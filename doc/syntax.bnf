@@ -6,6 +6,7 @@ reserved "as"
 reserved "assert"
 reserved "assertnot"
 reserved "assume"
+reserved "begin"
 reserved "compute"
 reserved "constant"
 reserved "definition"
@@ -17,7 +18,6 @@ reserved "let"
 reserved "open"
 reserved "print"
 reserved "private"
-reserved "proof"
 reserved "proofterm"
 reserved "protected"
 reserved "qed"
@@ -189,7 +189,7 @@ reserved "why3"
   | "rule" <rule> {"and" <rule>}*
   // Definition of a symbol or theorem
   | <exposition>? "definition" <ident> <arg>* {":" <type>}? "≔" <term>
-  | <exposition>? "theorem" <ident> <arg>* ":" <type> "proof" <tactic>*
+  | <exposition>? "theorem" <ident> <arg>* ":" <type> "begin" <tactic>*
     {"qed"|"admit"|"abort"}
   // Assertion
   | "assert" arg* "⊢" <assertion>
