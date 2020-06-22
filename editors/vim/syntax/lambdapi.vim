@@ -43,7 +43,7 @@ syntax keyword KeywordOK contained let
 syntax keyword KeywordOK contained open
 syntax keyword KeywordOK contained print
 syntax keyword KeywordOK contained private
-syntax keyword KeywordOK contained proof
+syntax keyword KeywordOK contained begin
 syntax keyword KeywordOK contained proofterm
 syntax keyword KeywordOK contained protected
 syntax keyword KeywordOK contained qed
@@ -82,7 +82,7 @@ syntax keyword KeywordKO contained let
 syntax keyword KeywordKO contained open
 syntax keyword KeywordKO contained print
 syntax keyword KeywordKO contained private
-syntax keyword KeywordKO contained proof
+syntax keyword KeywordKO contained begin
 syntax keyword KeywordKO contained proofterm
 syntax keyword KeywordKO contained protected
 syntax keyword KeywordKO contained qed

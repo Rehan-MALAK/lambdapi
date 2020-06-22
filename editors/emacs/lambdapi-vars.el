@@ -27,7 +27,7 @@
     "declared"
     "builtin"
     "open"
-    "proof"
+    "begin"
     "qed"
     "require"
     "rule"

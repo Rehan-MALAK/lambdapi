@@ -94,7 +94,7 @@ set builtin "refl"  ≔ refl
 
 // [Π n m, n + S m = S (n+m)]
 theorem add_succ_r n m : P (n + s m = s (n + m))
-proof
+begin
   assume n m
   refine nat_ind (λn, n + s m = s (n + m)) _ _ n
   // Case 0
@@ -108,14 +108,14 @@ proof
 qed
 
 theorem test0 x y z : P ((x + s y) + z = (s (x + y)) + z)
-proof
+begin
   assume x y z
   rewrite add_succ_r
   refine refl nat (add (s (add x y)) z)
 qed
 
 theorem test1 a (x y : T a) : P(x=y) → P(y=x)
-proof
+begin
   assume a x y xy
   rewrite - xy
   reflexivity

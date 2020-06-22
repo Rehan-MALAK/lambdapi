@@ -5,7 +5,7 @@ definition fst : T → U → T ≔ λ x _, x
 definition snd : T → U → U ≔ λ _ x, x
 
 theorem trivial : T → T → T → T
-proof
+begin
   assume _ _ x
   refine x
 qed
