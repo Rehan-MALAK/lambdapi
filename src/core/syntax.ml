@@ -200,7 +200,7 @@ type p_config =
   (** Unification hint declarations. *)
 
 (** Parser-level representation of a single command. *)
-type p_statement = (ident * p_arg list * p_type) loc
+type p_statement = (ident * p_arg list * p_type option) loc
 
 (** Parser-level representation of modifiers. *)
 type p_modifier =
@@ -220,13 +220,10 @@ type p_command_aux =
   (** Symbol declaration. *)
   | P_rules      of p_rule list
   (** Rewriting rule declarations. *)
-  | P_definition of p_modifier loc list * bool * ident * p_arg list
-                    * p_type option * p_term 
+  | P_definition of p_modifier loc list * bool * p_statement
+                    * p_term option
                     * (p_tactic list * p_proof_end loc) option
-  (** Definition of a symbol (unfoldable). *)
-  | P_theorem    of p_modifier loc list * p_statement * p_tactic list *
-                    p_proof_end loc
-  (** Theorem with its proof. *)
+  (** Definition or theorem (opaque) of a symbol (unfoldable). *)
   | P_set        of p_config
   (** Set the configuration. *)
   | P_query      of p_query
@@ -370,15 +367,13 @@ let eq_p_command : p_command eq = fun c1 c2 ->
       && List.equal eq_p_arg al1 al2
   | (P_rules(rs1)                , P_rules(rs2)                ) ->
       List.equal eq_p_rule rs1 rs2
-  | (P_definition(e1,b1,s1,l1,a1,t1,_), P_definition(e2,b2,s2,l2,a2,t2,_)) ->
-    (* TODO *)
-      e1 = e2 && b1 = b2 && eq_ident s1 s2 && List.equal eq_p_arg l1 l2
-      && Option.equal eq_p_term a1 a2 && eq_p_term t1 t2
-  | (P_theorem(ex1,st1,ts1,e1)   , P_theorem(ex2,st2,ts2,e2)   ) ->
-      let (s1,l1,a1) = st1.elt in
-      let (s2,l2,a2) = st2.elt in
-      ex1 = ex2 && eq_ident s1 s2 && eq_p_term a1 a2 && e1.elt = e2.elt
-      && List.equal eq_p_arg l1 l2 && List.equal eq_p_tactic ts1 ts2
+  | (P_definition(ms1,b1,st1,t1,ts_pe1), P_definition(ms2,b2,st2,t2,ts_pe2)) ->
+      let s1,l1,a1 = st1.elt in
+      let s2,l2,a2 = st2.elt in
+      let eq_tactic = fun (ts1,_) (ts2,_) -> (List.equal eq_p_tactic) ts1 ts2 in
+      ms1 = ms2 && b1 = b2 && eq_ident s1 s2 && List.equal eq_p_arg l1 l2
+      && Option.equal eq_p_term a1 a2 && Option.equal eq_p_term t1 t2
+      && Option.equal eq_tactic ts_pe1 ts_pe2
   | (P_set(c1)                   , P_set(c2)                   ) ->
       eq_p_config c1 c2
   | (P_query(q1)                 , P_query(q2)                 ) ->
