@@ -605,7 +605,8 @@ let parser config =
       P_config_quant(qid)
 
 let parser statement =
-  _theorem_ s:ident al:arg* ":" a:term _proof_ -> Pos.in_pos _loc (s,al,a)
+  s:ident al:arg* a:{":" term}? ->
+  Pos.in_pos _loc (s,al,a)
 
 let parser proof =
   ts:tactic* e:proof_end -> (ts, Pos.in_pos _loc_e e)
@@ -664,11 +665,11 @@ let parser cmd =
       -> P_symbol(mods, s, al, a, ts_pe)
   | _rule_ r:rule rs:{_:_with_ rule}*
       -> P_rules(r::rs)
-  | ms:modifier* _definition_ s:ident al:arg* ao:{":" term}? "≔" t:term
+  | ms:modifier* _definition_ st:statement t:{"≔" term}?
         ts_pe:keyword_proof?
-      -> P_definition(ms,false,s,al,ao,t,ts_pe)
-  | ms:modifier* st:statement (ts,pe):proof
-      -> P_theorem(ms,st,ts,pe)
+      -> P_definition(ms,false,st,t   ,ts_pe      )
+  | ms:modifier* _theorem_ st:statement ts_pe:keyword_proof
+      -> P_definition(ms,true ,st,None,Some(ts_pe))
   | _set_ c:config
       -> P_set(c)
   | q:query

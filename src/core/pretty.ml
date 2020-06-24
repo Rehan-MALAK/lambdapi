@@ -229,21 +229,22 @@ let pp_command : p_command pp = fun oc cmd ->
   | P_rules(r::rs)                  ->
       out "%a" (pp_p_rule true) r;
       List.iter (out "%a" (pp_p_rule false)) rs
-  | P_definition(ms,_,s,args,ao,t,_) (* TODO *) ->
-      out "@[<hov 2>%adefinition %a"
-        (Format.pp_print_list pp_modifier) ms pp_ident s;
+  | P_definition(ms,op,st,t,ts_pe) ->
+    let s,args,ao = st.elt in
+    let def_or_theo = if op then "theorem" else "definition" in
+      out "@[<hov 2>%a%s %a"
+        (Format.pp_print_list pp_modifier) ms def_or_theo pp_ident s;
       List.iter (out " %a" pp_p_arg) args;
       Option.iter (out " : @[<hov>%a@]" pp_p_term) ao;
-      out " ≔ @[<hov>%a@]@]" pp_p_term t
-  | P_theorem(ms,st,ts,pe) ->
-      let (s,args,a) = st.elt in
-      out "@[<hov 2>%atheorem %a"
-        (Format.pp_print_list pp_modifier) ms pp_ident s;
-      List.iter (out " %a" pp_p_arg) args;
-      out " : @[<2>%a@]@]@." pp_p_term a;
-      out "proof@.";
-      List.iter (out "  @[<hov>%a@]@." pp_p_tactic) ts;
-      out "%a" pp_p_proof_end pe.elt
+      Option.iter (out " ≔ @[<hov>%a@]@]" pp_p_term) t;
+      begin
+        match ts_pe with
+        | Some(ts,pe) ->
+          out "proof@.";
+          List.iter (out "  @[<hov>%a@]@." pp_p_tactic) ts;
+          out "%a" pp_p_proof_end pe.elt
+        | None -> ()
+      end
   | P_set(P_config_builtin(n,i))    ->
       out "set builtin %S ≔ %a" n pp_qident i
   | P_set(P_config_unop(unop))      ->

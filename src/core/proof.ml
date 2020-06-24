@@ -73,25 +73,45 @@ type proof_state =
 (** Short synonym for qualified use. *)
 type t = proof_state
 
-(** [init builtins name a] returns an initial proof state for a theorem  named
+(** [init name a] returns an initial proof state for a theorem  named
     [name], which statement is represented by the type [a]. Builtin symbols of
-    [builtins] may be used by tactics, and have been declared. *)
+    [builtins] may be used by tactics, and have been declared.
+    The list of goals is not initialized *)
 let init : Pos.strloc -> term -> t = fun name a ->
   let proof_term = fresh_meta ~name:name.elt a 0 in
   {proof_name = name; proof_term; proof_goals = []}
 
-(** [init builtins name a] returns an initial proof state for a theorem  named
-    [name], which statement is represented by the type [a]. Builtin symbols of
-    [builtins] may be used by tactics, and have been declared. *)
+(** [typ_init m] returns a goal associated to the meta m *)
 let typ_init : meta -> Goal.t list = fun m ->
   let goal_typ = Goal.GoalTyp (Goal.goal_typ_of_meta m) in
   [goal_typ]
 
-(** [sort_init a] returns a list of goals corresponding to the typability of
-    [a] by a sort *)
-let sort_init : term -> Goal.t list = fun a ->
+(** [sort_init typ ter] returns a list of goals corresponding to the
+    typability of [typ] by a sort and checking eventually that term
+    [ter] has type [typ] *)
+let sort_init : term option -> term option -> Goal.t list * term =
+  fun typ ter ->
   let goal_unif x = Goal.GoalUnif x in
-  let (sort, to_solve) = Infer.infer [] a in
+  let (typ,sort, to_solve) = match typ,ter with
+    | Some(typ),Some(ter) ->
+      let to_solve = Infer.check [] ter typ in
+      let sort, to_solve2 = Infer.infer [] typ in
+      typ, sort, to_solve @ to_solve2
+(*
+    | None,Some(ter) ->
+      let typ,to_solve = Infer.infer [] ter in
+      let sort,to_solve2 = Infer.infer [] typ in
+      typ, sort,to_solve@to_solve2
+*)
+    | None,Some(ter) ->
+      let typ,to_solve = Infer.infer [] ter in
+      let sort = Kind in
+      typ,sort, to_solve (* TODO Kind temporarly *)
+    | Some(typ),None ->
+      let sort,to_solve = Infer.infer [] typ in
+      typ,sort,to_solve
+    | None,None    -> assert false
+  in
   let to_solve = (* TODO this shoud be removed *)
     try
       Unif.solve {Unif.empty_problem with to_solve}
@@ -99,13 +119,13 @@ let sort_init : term -> Goal.t list = fun a ->
   in
   (* aggregate constr list of type of argument *)
   let goal_sort =
-  match sort with
+  match sort with (* TODO this part is wrong *)
     | Type | Kind -> []
     | _ ->
       let constr_sort = ([],Type,sort) in
       [goal_unif constr_sort]
   in
-  List.map goal_unif to_solve @ goal_sort
+  (List.map goal_unif to_solve @ goal_sort), typ
 
 (** [unif_init cs] returns a list of unification goals corresponding to a
     list of unification constraints [cs] *)

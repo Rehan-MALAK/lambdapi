@@ -136,11 +136,10 @@ let handle_require_as : popt -> sig_state -> Path.t -> ident -> sig_state =
 (** [data_proof] returns the datas needed for the proof script check
    TODO this is going to changes with the homogenization between
    definition and theorem *)
-let data_proof x a cmd impl expo pos ts pe prop mstrat d typ unif =
+let data_proof x a cmd impl expo pos ts pe prop mstrat d goals =
   (* Initialize proof state and save configuration data. *)
   let st = Proof.init x a in
-  let sort_unif = Proof.sort_init a in
-  let st = {st with proof_goals = unif @ sort_unif @ typ} in
+  let st = {st with proof_goals = goals} in
   Console.push_state ();
   (* Build proof checking data. *)
   let finalize ss st =
@@ -233,7 +232,9 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
           (ts,pe)
         | Some(ts,pe) -> (ts,pe)
       in
-      let data = data_proof x a cmd impl expo x.pos ts pe prop mstrat None [] [] in
+      let sort_unif, _ = Proof.sort_init (Some(a)) None in
+      let goals = sort_unif @ [] in
+      let data = data_proof x a cmd impl expo x.pos ts pe prop mstrat None goals in
       (ss, Some(data))
   | P_rules(rs)                ->
       (* Scoping and checking each rule in turn. *)
@@ -255,80 +256,96 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
       let syms = List.remove_phys_dups (List.map (fun (s, _) -> s) rs) in
       List.iter Tree.update_dtree syms;
       (ss, None)
-  | P_definition(ms, op, x, xs, ao, t, ts_pe) ->
+  | P_definition(ms, op, st, t, ts_pe) ->
+      let x,xs,ao = st.elt in
       (* We check that [x] is not already used. *)
       if Sign.mem ss.signature x.elt then
         fatal x.pos "Symbol [%s] already exists." x.elt;
       (* Verify modifiers. *)
       let (prop, expo, mstrat) = handle_modifiers ms in
-      if prop = Const then
-        fatal cmd.pos "A definition cannot be a constant.";
-      if mstrat <> Eager then
-        fatal cmd.pos "Pattern matching strategy modifiers cannot be used \
-                       in definitions.";
-      (* Desugaring of arguments and scoping of [t]. *)
-      let t = if xs = [] then t else Pos.none (P_Abst(xs, t)) in
-(*       let tt = t in *)
-      let t = scope_basic expo t in
-      (* Desugaring of arguments and computation of argument impliciteness. *)
-      let (ao, impl) =
-        match ao with
-        | None    -> (None, List.map (fun (_,_,impl) -> impl) xs)
-        | Some(a) ->
-            let a = if xs = [] then a else Pos.none (P_Prod(xs,a)) in
-            (Some(a), Scope.get_implicitness a)
+      if op = false then
+        begin
+          if prop = Const then
+            fatal cmd.pos "A definition cannot be a constant.";
+          if mstrat <> Eager then
+            fatal cmd.pos "Pattern matching strategy modifiers cannot be used \
+                           in definitions.";
+        end
+      else (* if op = true *)
+        begin
+
+          if prop <> Defin then
+            fatal cmd.pos "Property modifiers cannot be used in theorems.";
+          if mstrat <> Eager then
+            fatal cmd.pos "Pattern matching strategy modifiers cannot be used \
+                           in theorems.";
+        end;
+      let a,impl,goals,d,prop,ts,pe =
+        begin
+          match op,ao,t with
+          (* definition is non-opaque and defined by a term *)
+          | false,_,Some(t) ->
+            (* Desugaring of arguments and scoping of [t]. *)
+            let t = if xs = [] then t else Pos.none (P_Abst(xs, t)) in
+            let tt = t in
+            let t = scope_basic expo t in
+            (* Desugaring of arguments and argument impliciteness. *)
+            let (ao, impl) =
+              match ao with
+              | None    -> (None, List.map (fun (_,_,impl) -> impl) xs)
+              | Some(a) ->
+                let a = if xs = [] then a else Pos.none (P_Prod(xs,a)) in
+                (Some(a), Scope.get_implicitness a)
+            in
+            let ao = Option.map (scope_basic expo) ao in
+            (* Get constraint list depending on whether a is given*)
+            let goals, a = Proof.sort_init ao (Some(t)) in
+            let (ts,pe) = match ts_pe with
+              | None ->
+                let refine = Pos.make cmd.pos (P_tac_refine(tt)) in
+                let ts = [refine] in
+                let pe = Pos.make cmd.pos P_proof_qed in
+                (ts,pe)
+              | Some(ts,pe) -> (ts,pe)
+            in
+            let proof_term = fresh_meta ~name:x.elt a 0 in
+            let typ = Proof.typ_init proof_term in
+            (*           let unif = Proof.unif_init cs in *)
+            let goals = goals @ typ in
+            (*           let sort_unif = Proof.sort_init a None in *)
+            (*           let goals = sort_unif @ goals in *)
+            let d = Some(t) in
+            let prop = Defin in
+            a,impl,goals,d,prop,ts,pe
+          (* theorem is opaque and proof term is builded via tactics *)
+          | true,Some(a),None ->
+            (* Desugaring of arguments of [a]. *)
+            let a = if xs = [] then a else Pos.none (P_Prod(xs, a)) in
+            (* Obtaining the implicitness of arguments. *)
+            let impl = Scope.get_implicitness a in
+            (* Scoping the type (statement) of the theorem. *)
+            let a = scope_basic expo a in
+            (* We check that no metavariable remains in [a]. *)
+            let proof_term = fresh_meta ~name:x.elt a 0 in
+            let goals = Proof.typ_init proof_term in
+            let (ts,pe) = match ts_pe with
+              | Some(ts,pe) -> (ts,pe)
+              | None -> fatal x.pos "Theorem should have a proof script !";
+            in
+            let sort_unif,_ = Proof.sort_init (Some(a)) None in
+            let goals = sort_unif @ goals in
+            let d = None in
+            let prop = Const in
+            a,impl,goals,d,prop,ts,pe
+          | true,None,None ->
+            fatal x.pos "Theorem should have an explicit type !"
+          | true,_,Some(_) ->
+            fatal x.pos "Theorem proof term should be builded via tactics!"
+          | false,_,None ->
+            fatal x.pos "Definition should have a definition term !"
+        end
       in
-      let ao = Option.map (scope_basic expo) ao in
-      (* Get constraint list depending on whether a is given*)
-      let a,cs =
-        match ao with
-        | Some(a) ->
-          let cs = Infer.check [] t a in
-            a,cs
-        | None    ->
-          Infer.infer [] t
-      in
-      let d = if op then None else Some(t) in
-      let (ts,pe) = match ts_pe with
-        | None ->
-(*
-          let refine = Pos.make cmd.pos (P_tac_refine(tt)) in
-          let ts = [refine] in
-*)
-          let ts = [] in
-          let pe = Pos.make cmd.pos P_proof_qed in
-          (ts,pe)
-        | Some(ts,pe) -> (ts,pe)
-      in
-(*
-      let proof_term = fresh_meta ~name:x.elt a 0 in
-      let typ = Proof.typ_init proof_term in
-*)
-      let typ = [] in
-      let unif = Proof.unif_init cs in
-      let data = data_proof x a cmd impl expo x.pos ts pe Defin mstrat d typ unif in
-      (ss, Some(data))
-  | P_theorem(ms, stmt, ts, pe) ->
-      let (x,xs,a) = stmt.elt in
-      (* We check that [x] is not already used. *)
-      if Sign.mem ss.signature x.elt then
-        fatal x.pos "Symbol [%s] already exists." x.elt;
-      (* Desugaring of arguments of [a]. *)
-      let a = if xs = [] then a else Pos.none (P_Prod(xs, a)) in
-      (* Obtaining the implicitness of arguments. *)
-      let impl = Scope.get_implicitness a in
-      (* Verify modifiers. *)
-      let (prop, expo, mstrat) = handle_modifiers ms in
-      if prop <> Defin then
-        fatal cmd.pos "Property modifiers cannot be used in theorems.";
-      if mstrat <> Eager then
-        fatal cmd.pos "Pattern matching strategy modifiers cannot be used \
-                       in theorems.";
-      (* Scoping the type (statement) of the theorem. *)
-      let a = scope_basic expo a in
-      let proof_term = fresh_meta ~name:x.elt a 0 in
-      let typ = Proof.typ_init proof_term in
-      let data = data_proof x a cmd impl expo stmt.pos ts pe Const mstrat None typ [] in
+      let data = data_proof x a cmd impl expo st.pos ts pe prop mstrat d goals in
       (ss, Some(data))
   | P_set(cfg)                 ->
       let ss =
