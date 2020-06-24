@@ -85,7 +85,7 @@ let handle_tactic : Sig_state.t -> Proof.t -> p_tactic -> Proof.t =
       | Some gt -> Goal.get_type gt
       | None -> assert false
     in
-    let tt = Scope.scope_term Public ss env t in
+    let tt = Scope.scope_term Privat ss env t in
     env, tt
   in
 
