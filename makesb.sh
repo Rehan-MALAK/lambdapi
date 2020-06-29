@@ -86,8 +86,8 @@ function where_is_let ()
 
 rm -fv sb*
 
-# for br in P_symbol P_rules P_definition P_theorem P_query ; do
-for br in P_definition ; do
+for br in P_symbol P_rules P_definition P_query ; do
+# for br in P_definition ; do
   line=$(where_is "|" "$br" "(" "src/core/handle.ml")
   brcmd="br @ Core__Handle $line"
   echo "$brcmd" >> sbhandle

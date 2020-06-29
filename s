@@ -1,6 +1,7 @@
 set program lambdapi.bc
-set argument check tests/unif.lp
+set argument check --debug t tests/pri.lp
 so sbhandle
+so sbtactics
 run
 set print_depth 500
 set print_length 10000
