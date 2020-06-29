@@ -6,7 +6,7 @@ begin
   assume h1 h2
   apply h1
   apply h2
-qed
+end
 
 constant symbol C : TYPE
 
@@ -16,4 +16,4 @@ begin
   apply h1
   apply h2
   apply h3
-qed
+end

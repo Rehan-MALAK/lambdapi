@@ -38,7 +38,7 @@ let _ =
 
 (** Representation of a yet unchecked proof. The structure is initialized when
     the proof mode is entered, and its finalizer is called when the proof mode
-    is exited (i.e., when a terminator like “qed” is used).  Note that tactics
+    is exited (i.e., when a terminator like “end” is used).  Note that tactics
     do not work on this structure directly,  although they act on the contents
     of its [pdata_p_state] field. *)
 type proof_data =
@@ -172,12 +172,12 @@ let data_proof x a cmd impl expo pos ts pe prop mstrat d goals =
     | P_proof_admit ->
       (* If the proof is finished, display a warning. *)
       if Proof.finished st then
-        wrn cmd.pos "The proof is finished. You can use 'qed' instead.";
+        wrn cmd.pos "The proof is finished. You can use 'end' instead.";
       (* Add a symbol corresponding to the proof, with a warning. *)
       out 3 "(symb) %s (admit)\n" x.elt;
       wrn cmd.pos "Proof admitted.";
       Sig_state.add_symbol ss expo prop mstrat x a impl d
-    | P_proof_qed   ->
+    | P_proof_end   ->
       (* Check that the proof is indeed finished. *)
       if not (Proof.finished st) then
         begin
@@ -185,7 +185,7 @@ let data_proof x a cmd impl expo pos ts pe prop mstrat d goals =
           fatal cmd.pos "The proof is not finished."
         end;
       (* Add a symbol corresponding to the proof. *)
-      out 3 "(symb) %s (qed)\n" x.elt;
+      out 3 "(symb) %s (end)\n" x.elt;
       Sig_state.add_symbol ss expo prop mstrat x a impl d
   in
   let data =
@@ -228,7 +228,7 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
       let (ts,pe) = match ts_pe with
         | None ->
           let ts = [] in
-          let pe = Pos.make cmd.pos P_proof_qed in
+          let pe = Pos.make cmd.pos P_proof_end in
           (ts,pe)
         | Some(ts,pe) -> (ts,pe)
       in
@@ -304,7 +304,7 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
               | None ->
                 let refine = Pos.make cmd.pos (P_tac_refine(tt)) in
                 let ts = [refine] in
-                let pe = Pos.make cmd.pos P_proof_qed in
+                let pe = Pos.make cmd.pos P_proof_end in
                 (ts,pe)
               | Some(ts,pe) -> (ts,pe)
             in

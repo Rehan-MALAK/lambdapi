@@ -177,7 +177,7 @@ type p_tactic = p_tactic_aux loc
 
 (** Parser-level representation of a proof terminator. *)
 type p_proof_end =
-  | P_proof_qed
+  | P_proof_end
   (** The proof is done and fully checked. *)
   | P_proof_admit
   (** Give up current state and admit the theorem. *)

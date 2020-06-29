@@ -23,4 +23,4 @@ begin
   apply case (λb, eq (neg (neg b)) b)
   apply refl
   apply refl
-qed
+end

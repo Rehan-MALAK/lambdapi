@@ -28,7 +28,7 @@
     "builtin"
     "open"
     "begin"
-    "qed"
+    "end"
     "require"
     "rule"
     "symbol"
