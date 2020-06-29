@@ -173,6 +173,7 @@ let _begin_      = KW.create "begin"
 let _compute_    = KW.create "compute"
 let _constant_   = KW.create "constant"
 let _definition_ = KW.create "definition"
+let _end_        = KW.create "end"
 let _fail_       = KW.create "fail"
 let _focus_      = KW.create "focus"
 let _in_         = KW.create "in"
@@ -184,7 +185,6 @@ let _print_      = KW.create "print"
 let _private_    = KW.create "private"
 let _proofterm_  = KW.create "proofterm"
 let _protected_  = KW.create "protected"
-let _qed_        = KW.create "qed"
 let _refine_     = KW.create "refine"
 let _refl_       = KW.create "reflexivity"
 let _require_    = KW.create "require"
@@ -572,7 +572,7 @@ let parser tactic =
 
 (** [proof_end] is a parser for a proof terminator. *)
 let parser proof_end =
-  | _qed_   -> P_proof_qed
+  | _end_   -> P_proof_end
   | _admit_ -> P_proof_admit
   | _abort_ -> P_proof_abort
 

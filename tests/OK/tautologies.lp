@@ -8,7 +8,7 @@ begin
   refine bool_ind (λa, eq bool (bool_and a a) a) ?CT[a] ?CF[a] a
   reflexivity
   reflexivity
-qed
+end
 
 // Same with a reduction rule.
 
@@ -18,4 +18,4 @@ theorem and_idempotent_rw : Πa, P (eq bool (bool_and a a) a)
 begin
   assume a
   reflexivity
-qed
+end

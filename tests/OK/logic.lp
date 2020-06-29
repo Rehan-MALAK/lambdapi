@@ -98,7 +98,7 @@ begin
     apply bot_elim
     apply not_elim (not A) nnp
     apply pna
-qed
+end
 
 set builtin "P"     ≔ P
 set builtin "T"     ≔ T

@@ -103,7 +103,7 @@ Indent by `lambdapi-indent-basic' in proofs, and 0 otherwise."
                ("private" symdec)
                ("begin" prfcontent "abort")
                ("begin" prfcontent "admit")
-               ("begin" prfcontent "qed")
+               ("begin" prfcontent "end")
                ("protected" symdec)
                ("require" ident "as" ident)
                ("require" ident)
@@ -151,8 +151,8 @@ The default lexer is used because the syntax is primarily made of sexps."
     (`(:before . "fail") `(column . ,lambdapi-indent-basic))
     (`(:before . "solve") `(column . ,lambdapi-indent-basic))
 
-    (`(:before . ,(or "admit" "abort" "qed")) '(column . 0))
-    (`(:after . ,(or "admit" "abort" "qed")) '(column . 0))
+    (`(:before . ,(or "admit" "abort" "end")) '(column . 0))
+    (`(:after . ,(or "admit" "abort" "end")) '(column . 0))
 
     (`(:before . ,(or "set" "compute" "type" "assert" "assertnot"))
      (lambdapi--query-indent))

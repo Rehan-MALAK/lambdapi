@@ -240,7 +240,7 @@ tactic may generate new goals/metavariables. The proof of the theorem
 is complete only when all generated goals have been solved.
 
 A proof must start by the keyword `begin` followed by a sequence of
-[tactics](tactics.md), and must end by the keywords `qed` (when the
+[tactics](tactics.md), and must end by the keywords `end` (when the
 proof is complete), `admit` (when one wants to admit the theorem
 without proving it) or `abort` (when one wants to end the proof
 without adding the theorem in the environment).

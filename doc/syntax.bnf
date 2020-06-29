@@ -10,6 +10,7 @@ reserved "begin"
 reserved "compute"
 reserved "constant"
 reserved "definition"
+reserved "end"
 reserved "fail"
 reserved "focus"
 reserved "in"
@@ -20,7 +21,6 @@ reserved "print"
 reserved "private"
 reserved "proofterm"
 reserved "protected"
-reserved "qed"
 reserved "refine"
 reserved "reflexivity"
 reserved "require"
@@ -190,7 +190,7 @@ reserved "why3"
   // Definition of a symbol or theorem
   | <exposition>? "definition" <ident> <arg>* {":" <type>}? "≔" <term>
   | <exposition>? "theorem" <ident> <arg>* ":" <type> "begin" <tactic>*
-    {"qed"|"admit"|"abort"}
+    {"end"|"admit"|"abort"}
   // Assertion
   | "assert" arg* "⊢" <assertion>
   | "assertnot" arg* "⊢" <assertion>

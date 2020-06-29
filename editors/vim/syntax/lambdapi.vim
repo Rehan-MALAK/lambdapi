@@ -33,9 +33,11 @@ syntax keyword KeywordOK contained as
 syntax keyword KeywordOK contained assert
 syntax keyword KeywordOK contained assertnot
 syntax keyword KeywordOK contained assume
+syntax keyword KeywordOK contained begin
 syntax keyword KeywordOK contained compute
 syntax keyword KeywordOK contained constant
 syntax keyword KeywordOK contained definition
+syntax keyword KeywordOK contained end
 syntax keyword KeywordOK contained focus
 syntax keyword KeywordOK contained in
 syntax keyword KeywordOK contained injective
@@ -43,10 +45,8 @@ syntax keyword KeywordOK contained let
 syntax keyword KeywordOK contained open
 syntax keyword KeywordOK contained print
 syntax keyword KeywordOK contained private
-syntax keyword KeywordOK contained begin
 syntax keyword KeywordOK contained proofterm
 syntax keyword KeywordOK contained protected
-syntax keyword KeywordOK contained qed
 syntax keyword KeywordOK contained refine
 syntax keyword KeywordOK contained reflexivity
 syntax keyword KeywordOK contained require
@@ -72,9 +72,11 @@ syntax keyword KeywordKO contained as
 syntax keyword KeywordKO contained assert
 syntax keyword KeywordKO contained assertnot
 syntax keyword KeywordKO contained assume
+syntax keyword KeywordKO contained begin
 syntax keyword KeywordKO contained compute
 syntax keyword KeywordKO contained constant
 syntax keyword KeywordKO contained definition
+syntax keyword KeywordKO contained end
 syntax keyword KeywordKO contained focus
 syntax keyword KeywordKO contained in
 syntax keyword KeywordKO contained injective
@@ -82,10 +84,8 @@ syntax keyword KeywordKO contained let
 syntax keyword KeywordKO contained open
 syntax keyword KeywordKO contained print
 syntax keyword KeywordKO contained private
-syntax keyword KeywordKO contained begin
 syntax keyword KeywordKO contained proofterm
 syntax keyword KeywordKO contained protected
-syntax keyword KeywordKO contained qed
 syntax keyword KeywordKO contained refine
 syntax keyword KeywordKO contained reflexivity
 syntax keyword KeywordKO contained require
