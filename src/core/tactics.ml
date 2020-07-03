@@ -41,8 +41,9 @@ let solve ps pos =
 (** [handle_tactic ss ps tac] tries to apply the tactic [tac] (in the proof
      state [ps]), and returns the new proof state.  This function fails
      gracefully in case of error. *)
-let handle_tactic : Sig_state.t -> Proof.t -> p_tactic -> Proof.t =
-  fun ss ps tac ->
+let handle_tactic :
+  Sig_state.t -> Terms.expo -> Proof.t -> p_tactic -> Proof.t =
+  fun ss e ps tac ->
   (* First handle the tactics that do not change the goals. *)
   match tac.elt with
   | P_tac_print         ->
@@ -85,7 +86,7 @@ let handle_tactic : Sig_state.t -> Proof.t -> p_tactic -> Proof.t =
       | Some gt -> Goal.get_type gt
       | None -> assert false
     in
-    let tt = Scope.scope_term Privat ss env t in
+    let tt = Scope.scope_term e ss env t in
     env, tt
   in
 
@@ -186,9 +187,10 @@ let handle_tactic : Sig_state.t -> Proof.t -> p_tactic -> Proof.t =
   | P_tac_fail          ->
       fatal tac.pos "Call to tactic \"fail\""
 
-let handle_tactic : Sig_state.t -> Proof.t -> p_tactic -> Proof.t =
-  fun ss ps tac ->
-  try handle_tactic ss ps tac
+let handle_tactic :
+  Sig_state.t -> Terms.expo -> Proof.t -> p_tactic -> Proof.t =
+  fun ss exp ps tac ->
+  try handle_tactic ss exp ps tac
   with Fatal(_,_) as e ->
-    let _ = handle_tactic ss ps (none P_tac_print) in
+    let _ = handle_tactic ss exp ps (none P_tac_print) in
     raise e
