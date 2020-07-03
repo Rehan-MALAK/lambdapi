@@ -667,9 +667,10 @@ let parser cmd =
       -> P_rules(r::rs)
   | ms:modifier* _definition_ st:statement t:{"≔" term}?
         ts_pe:keyword_begin?
-      -> P_definition(ms,false,st,t   ,ts_pe      )
-  | ms:modifier* _theorem_ st:statement ts_pe:keyword_begin
-      -> P_definition(ms,true ,st,None,Some(ts_pe))
+      -> P_definition(ms,false,st,t,ts_pe)
+  | ms:modifier* _theorem_    st:statement t:{"≔" term}?
+        ts_pe:keyword_begin?
+      -> P_definition(ms,true ,st,t,ts_pe)
   | _set_ c:config
       -> P_set(c)
   | q:query
