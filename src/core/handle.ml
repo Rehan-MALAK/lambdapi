@@ -46,7 +46,8 @@ type proof_data =
   ; pdata_p_state  : Proof.t  (* Initial proof state for the proof.  *)
   ; pdata_tactics  : p_tactic list (* Tactics for the proof.         *)
   ; pdata_finalize : sig_state -> Proof.t -> sig_state (* Finalizer. *)
-  ; pdata_term_pos : Pos.popt (* Position of the proof's terminator. *) }
+  ; pdata_term_pos : Pos.popt (* Position of the proof's terminator. *)
+  ; pdata_expo     : Terms.expo (* Allow use of private symbols      *) }
 
 (** [handle_open pos ss p] handles the command [open p] with [ss] as the
    signature state. On success, an updated signature state is returned. *)
@@ -181,7 +182,7 @@ let data_proof x a cmd impl expo pos ts pe prop mstrat d goals =
       (* Check that the proof is indeed finished. *)
       if not (Proof.finished st) then
         begin
-          let _ = Tactics.handle_tactic ss st (none P_tac_print) in
+          let _ = Tactics.handle_tactic ss expo st (none P_tac_print) in
           fatal cmd.pos "The proof is not finished."
         end;
       (* Add a symbol corresponding to the proof. *)
@@ -190,7 +191,8 @@ let data_proof x a cmd impl expo pos ts pe prop mstrat d goals =
   in
   let data =
     { pdata_stmt_pos = pos ; pdata_p_state = st ; pdata_tactics = ts
-    ; pdata_finalize = finalize ; pdata_term_pos = pe.pos }
+    ; pdata_finalize = finalize ; pdata_term_pos = pe.pos
+    ; pdata_expo = expo }
   in
   data
 

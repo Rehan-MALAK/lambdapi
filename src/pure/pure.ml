@@ -85,7 +85,7 @@ let handle_command : state -> Command.t -> command_result =
 let handle_tactic : proof_state -> Tactic.t -> tactic_result = fun s t ->
   let (_, ss, p, finalize) = s in
   try
-    let p = Tactics.handle_tactic ss p t in
+    let p = Tactics.handle_tactic ss Terms.Public p t in (* TODO WHY PUBLIC ? *)
     Tac_OK(Time.save (), ss, p, finalize)
   with Fatal(p,m) -> Tac_Error(p,m)
 
