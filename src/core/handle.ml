@@ -137,7 +137,7 @@ let handle_require_as : popt -> sig_state -> Path.t -> ident -> sig_state =
 (** [data_proof] returns the datas needed for the proof script check
    TODO this is going to changes with the homogenization between
    definition and theorem *)
-let data_proof x a cmd impl expo pos ts pe prop mstrat d goals =
+let data_proof x a cmd impl expo pdata_expo pos ts pe prop mstrat d goals =
   (* Initialize proof state and save configuration data. *)
   let st = Proof.init x a in
   let st = {st with proof_goals = goals} in
@@ -192,7 +192,7 @@ let data_proof x a cmd impl expo pos ts pe prop mstrat d goals =
   let data =
     { pdata_stmt_pos = pos ; pdata_p_state = st ; pdata_tactics = ts
     ; pdata_finalize = finalize ; pdata_term_pos = pe.pos
-    ; pdata_expo = expo }
+    ; pdata_expo = pdata_expo }
   in
   data
 
@@ -236,7 +236,7 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
       in
       let sort_unif, _ = Proof.sort_init (Some(a)) None in
       let goals = sort_unif @ [] in
-      let data = data_proof x a cmd impl expo x.pos ts pe prop mstrat None goals in
+      let data = data_proof x a cmd impl expo expo x.pos ts pe prop mstrat None goals in
       (ss, Some(data))
   | P_rules(rs)                ->
       (* Scoping and checking each rule in turn. *)
@@ -282,7 +282,7 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
             fatal cmd.pos "Pattern matching strategy modifiers cannot be used \
                            in theorems.";
         end;
-      let a,impl,goals,d,prop,ts,pe =
+      let a,impl,goals,d,prop,ts,pe,pdata_expo =
         begin
           match op,ao,t with
           (* definition is non-opaque and defined by a term *)
@@ -315,10 +315,10 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
             (*           let unif = Proof.unif_init cs in *)
             let goals = goals @ typ in
             (*           let sort_unif = Proof.sort_init a None in *)
-            (*           let goals = sort_unif @ goals in *)
             let d = Some(t) in
             let prop = Defin in
-            a,impl,goals,d,prop,ts,pe
+           (* non opaque => pdata expo = symbol expo *)
+            a,impl,goals,d,prop,ts,pe,expo
           (* theorem is opaque and proof term is builded via tactics *)
           | true,Some(a),None ->
             (* Desugaring of arguments of [a]. *)
@@ -338,7 +338,8 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
             let goals = sort_unif @ goals in
             let d = None in
             let prop = Const in
-            a,impl,goals,d,prop,ts,pe
+           (* opaque => pdata expo = Private = we allow every symbols *)
+            a,impl,goals,d,prop,ts,pe,Privat
           | true,None,None ->
             fatal x.pos "Theorem should have an explicit type !"
           | true,_,Some(_) ->
@@ -347,7 +348,7 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
             fatal x.pos "Definition should have a definition term !"
         end
       in
-      let data = data_proof x a cmd impl expo st.pos ts pe prop mstrat d goals in
+      let data = data_proof x a cmd impl expo pdata_expo st.pos ts pe prop mstrat d goals in
       (ss, Some(data))
   | P_set(cfg)                 ->
       let ss =
