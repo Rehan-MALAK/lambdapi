@@ -94,22 +94,37 @@ let sort_init : term option -> term option -> Goal.t list * term =
   let goal_unif x = Goal.GoalUnif x in
   let (typ,sort, to_solve) = match typ,ter with
     | Some(typ),Some(ter) ->
-      let to_solve = Infer.check [] ter typ in
       let sort, to_solve2 = Infer.infer [] typ in
+      let to_solve =
+        begin
+          match sort with
+          | Type | Kind -> Infer.check [] ter typ
+          | _ -> assert false
+        end
+      in
       typ, sort, to_solve @ to_solve2
-(*
     | None,Some(ter) ->
       let typ,to_solve = Infer.infer [] ter in
-      let sort,to_solve2 = Infer.infer [] typ in
-      typ, sort,to_solve@to_solve2
-*)
-    | None,Some(ter) ->
-      let typ,to_solve = Infer.infer [] ter in
-      let sort = Kind in
-      typ,sort, to_solve (* TODO Kind temporarly *)
+      let sort,to_solve2 =
+      begin
+        match typ with
+        | Kind -> assert false (* we forbid x := _ -> TYPE *)
+        | _ -> let sort, to_solve2 = Infer.infer [] typ in
+          begin
+            match sort with
+            | Type | Kind -> sort,to_solve2
+            | _ -> assert false
+          end
+      end
+      in
+      typ,sort, to_solve @ to_solve2
     | Some(typ),None ->
-      let sort,to_solve = Infer.infer [] typ in
-      typ,sort,to_solve
+      let sort, to_solve2 = Infer.infer [] typ in
+      begin
+        match sort with
+        | Type | Kind -> typ,sort,to_solve2
+        | _ -> assert false
+      end
     | None,None    -> assert false
   in
   let to_solve = (* TODO this shoud be removed *)
@@ -118,14 +133,14 @@ let sort_init : term option -> term option -> Goal.t list * term =
     with Unif.Unsolvable -> to_solve
   in
   (* aggregate constr list of type of argument *)
-  let goal_sort =
-  match sort with (* TODO this part is wrong *)
-    | Type | Kind -> []
-    | _ ->
-      let constr_sort = ([],Type,sort) in
-      [goal_unif constr_sort]
-  in
+(*
+  let constr_sort = ([],Type,sort) in
+  let goal_sort = [goal_unif constr_sort] in
   (List.map goal_unif to_solve @ goal_sort), typ
+*)
+  let _sort = sort in
+  (List.map goal_unif to_solve), typ
+
 
 (** [unif_init cs] returns a list of unification goals corresponding to a
     list of unification constraints [cs] *)
