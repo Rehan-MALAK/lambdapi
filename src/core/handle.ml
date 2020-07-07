@@ -236,7 +236,9 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
       in
       let sort_unif, _ = Proof.sort_init (Some(a)) None in
       let goals = sort_unif @ [] in
-      let data = data_proof x a cmd impl expo expo x.pos ts pe prop mstrat None goals in
+      let data =
+        data_proof x a cmd impl expo expo x.pos ts pe prop mstrat None goals
+      in
       (ss, Some(data))
   | P_rules(rs)                ->
       (* Scoping and checking each rule in turn. *)
@@ -270,8 +272,8 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
           if prop = Const then
             fatal cmd.pos "A definition cannot be a constant.";
           if mstrat <> Eager then
-            fatal cmd.pos "Pattern matching strategy modifiers cannot be used \
-                           in definitions.";
+            fatal cmd.pos "Pattern matching strategy modifiers cannot be \
+                           used in definitions.";
         end
       else (* if op = true *)
         begin
@@ -279,8 +281,8 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
           if prop <> Defin then
             fatal cmd.pos "Property modifiers cannot be used in theorems.";
           if mstrat <> Eager then
-            fatal cmd.pos "Pattern matching strategy modifiers cannot be used \
-                           in theorems.";
+            fatal cmd.pos "Pattern matching strategy modifiers cannot be \
+                           used in theorems.";
         end;
       let a,impl,goals,d,prop,ts,pe,pdata_expo =
         begin
@@ -348,7 +350,10 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
             fatal x.pos "Definition should have a definition term !"
         end
       in
-      let data = data_proof x a cmd impl expo pdata_expo st.pos ts pe prop mstrat d goals in
+      let data =
+        data_proof
+          x a cmd impl expo pdata_expo st.pos ts pe prop mstrat d goals
+      in
       (ss, Some(data))
   | P_set(cfg)                 ->
       let ss =
