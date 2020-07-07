@@ -267,92 +267,67 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
         fatal x.pos "Symbol [%s] already exists." x.elt;
       (* Verify modifiers. *)
       let (prop, expo, mstrat) = handle_modifiers ms in
-      if op = false then
-        begin
-          if prop = Const then
-            fatal cmd.pos "A definition cannot be a constant.";
-          if mstrat <> Eager then
-            fatal cmd.pos "Pattern matching strategy modifiers cannot be \
-                           used in definitions.";
-        end
-      else (* if op = true *)
-        begin
-
-          if prop <> Defin then
-            fatal cmd.pos "Property modifiers cannot be used in theorems.";
-          if mstrat <> Eager then
-            fatal cmd.pos "Pattern matching strategy modifiers cannot be \
-                           used in theorems.";
-        end;
-      let a,impl,goals,d,prop,ts,pe,pdata_expo =
-        begin
-          match op,ao,t with
-          (* definition is non-opaque and defined by a term *)
-          | false,_,Some(t) ->
-            (* Desugaring of arguments and scoping of [t]. *)
-            let t = if xs = [] then t else Pos.none (P_Abst(xs, t)) in
-            let tt = t in
-            let t = scope_basic expo t in
-            (* Desugaring of arguments and argument impliciteness. *)
-            let (ao, impl) =
-              match ao with
-              | None    -> (None, List.map (fun (_,_,impl) -> impl) xs)
-              | Some(a) ->
-                let a = if xs = [] then a else Pos.none (P_Prod(xs,a)) in
-                (Some(a), Scope.get_implicitness a)
-            in
-            let ao = Option.map (scope_basic expo) ao in
-            (* Get constraint list depending on whether a is given*)
-            let goals, a = Proof.sort_init ao (Some(t)) in
-            let (ts,pe) = match ts_pe with
-              | None ->
-                let refine = Pos.make cmd.pos (P_tac_refine(tt)) in
-                let ts = [refine] in
-                let pe = Pos.make cmd.pos P_proof_end in
-                (ts,pe)
-              | Some(ts,pe) -> (ts,pe)
-            in
-            let proof_term = fresh_meta ~name:x.elt a 0 in
-            let typ = Proof.typ_init proof_term in
-            (*           let unif = Proof.unif_init cs in *)
-            let goals = goals @ typ in
-            (*           let sort_unif = Proof.sort_init a None in *)
-            let d = Some(t) in
-            let prop = Defin in
-           (* non opaque => pdata expo = symbol expo *)
-            a,impl,goals,d,prop,ts,pe,expo
-          (* theorem is opaque and proof term is builded via tactics *)
-          | true,Some(a),None ->
-            (* Desugaring of arguments of [a]. *)
-            let a = if xs = [] then a else Pos.none (P_Prod(xs, a)) in
-            (* Obtaining the implicitness of arguments. *)
-            let impl = Scope.get_implicitness a in
-            (* Scoping the type (statement) of the theorem. *)
-            let a = scope_basic expo a in
-            (* We check that no metavariable remains in [a]. *)
-            let proof_term = fresh_meta ~name:x.elt a 0 in
-            let goals = Proof.typ_init proof_term in
-            let (ts,pe) = match ts_pe with
-              | Some(ts,pe) -> (ts,pe)
-              | None -> fatal x.pos "Theorem should have a proof script !";
-            in
-            let sort_unif,_ = Proof.sort_init (Some(a)) None in
-            let goals = sort_unif @ goals in
-            let d = None in
-            let prop = Const in
-           (* opaque => pdata expo = Private = we allow every symbols *)
-            a,impl,goals,d,prop,ts,pe,Privat
-          | true,None,None ->
-            fatal x.pos "Theorem should have an explicit type !"
-          | true,_,Some(_) ->
-            fatal x.pos "Theorem proof term should be builded via tactics!"
-          | false,_,None ->
-            fatal x.pos "Definition should have a definition term !"
-        end
+      (* Desugaring of arguments and scoping of [t]. *)
+      let p_t,t = match t with
+        | Some t ->
+          let p_t = if xs = [] then t else Pos.none (P_Abst(xs, t)) in
+          let t = scope_basic expo p_t in
+          Some p_t, Some t
+        | None -> None, None
+      in
+      (* Desugaring of arguments and argument impliciteness. *)
+      let (ao, impl) =
+        match ao with
+        | None    -> (None, List.map (fun (_,_,impl) -> impl) xs)
+        | Some(a) ->
+          let a = if xs = [] then a else Pos.none (P_Prod(xs,a)) in
+          (Some(a), Scope.get_implicitness a)
+      in
+      let ao = Option.map (scope_basic expo) ao in
+      (* If a type [ao] is given, then we check that it is typable by a sort
+         and that [t] has type [a]. Otherwise, we try to infer the type of
+         [t]. Unification goals are collected *)
+      let sort_goals, a    = Proof.sort_init ao t in
+      (* And the main "type" goal *)
+      let proof_term = fresh_meta ~name:x.elt a 0 in
+      let typ_goal = Proof.typ_init proof_term in
+      let goals = sort_goals @ typ_goal in
+      (* Proof script *)
+      let (ts,pe) = match ts_pe,p_t with
+        | None,Some p_t ->
+            let refine = Pos.make cmd.pos (P_tac_refine(p_t)) in
+            let ts = [refine] in
+            let pe = Pos.make cmd.pos P_proof_end in
+            (ts,pe)
+        | Some(ts,pe),None -> (ts,pe)
+        | Some _, Some _ ->
+            fatal cmd.pos "Proof script and proof_term definition !?"
+        | None, None  ->
+            fatal cmd.pos "NO Proof script and NO proof_term definition !?"
+      in
+      (* Depending on opacity : theorem = false / definition = true *)
+      let pdata_expo =
+      match op,ao,prop,mstrat with
+        (* Theorem *)
+        | true , Some _ , Defin, Eager  -> Privat
+        | true , Some _ , _    , Eager  ->
+          fatal cmd.pos "Property modifiers cannot be used in theorems."
+        | true , Some _ , _    , _      ->
+          fatal cmd.pos "Pattern matching strategy modifiers cannot be \
+                         used in theorems."
+        | true , None   , _    , _      ->
+          fatal cmd.pos "Theorem should have an explicit type !"
+        (* Definition *)
+        | false, _      , Const, _      ->
+          fatal cmd.pos "A definition cannot be a constant."
+        | false, _      , _    , Sequen ->
+          fatal cmd.pos "Pattern matching strategy modifiers cannot be \
+                         used in definitions."
+        | false, _      , _    , _      -> expo
       in
       let data =
         data_proof
-          x a cmd impl expo pdata_expo st.pos ts pe prop mstrat d goals
+          x a cmd impl expo pdata_expo st.pos ts pe prop mstrat t goals
       in
       (ss, Some(data))
   | P_set(cfg)                 ->
