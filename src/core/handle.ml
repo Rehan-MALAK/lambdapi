@@ -267,28 +267,11 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
         fatal x.pos "Symbol [%s] already exists." x.elt;
       (* Verify modifiers. *)
       let (prop, expo, mstrat) = handle_modifiers ms in
-      if op = false then
-        begin
-          if prop = Const then
-            fatal cmd.pos "A definition cannot be a constant.";
-          if mstrat <> Eager then
-            fatal cmd.pos "Pattern matching strategy modifiers cannot be \
-                           used in definitions.";
-        end
-      else (* if op = true *)
-        begin
-
-          if prop <> Defin then
-            fatal cmd.pos "Property modifiers cannot be used in theorems.";
-          if mstrat <> Eager then
-            fatal cmd.pos "Pattern matching strategy modifiers cannot be \
-                           used in theorems.";
-        end;
       let a,impl,goals,d,prop,ts,pe,pdata_expo =
         begin
-          match op,ao,t with
+          match op,ao,t,prop,mstrat with
           (* definition is non-opaque and defined by a term *)
-          | false,_,Some(t) ->
+          | false,_,Some(t),(Defin|Injec),Eager ->
             (* Desugaring of arguments and scoping of [t]. *)
             let t = if xs = [] then t else Pos.none (P_Abst(xs, t)) in
             let tt = t in
@@ -318,11 +301,10 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
             let goals = goals @ typ in
             (*           let sort_unif = Proof.sort_init a None in *)
             let d = Some(t) in
-            let prop = Defin in
            (* non opaque => pdata expo = symbol expo *)
             a,impl,goals,d,prop,ts,pe,expo
           (* theorem is opaque and proof term is builded via tactics *)
-          | true,Some(a),None ->
+          | true,Some(a),None,Defin,Eager ->
             (* Desugaring of arguments of [a]. *)
             let a = if xs = [] then a else Pos.none (P_Prod(xs, a)) in
             (* Obtaining the implicitness of arguments. *)
@@ -342,12 +324,22 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
             let prop = Const in
            (* opaque => pdata expo = Private = we allow every symbols *)
             a,impl,goals,d,prop,ts,pe,Privat
-          | true,None,None ->
+          | true,None,None,_,_ ->
             fatal x.pos "Theorem should have an explicit type !"
-          | true,_,Some(_) ->
+          | true,_,Some(_),_,_ ->
             fatal x.pos "Theorem proof term should be builded via tactics!"
-          | false,_,None ->
+          | false,_,None,_,_ ->
             fatal x.pos "Definition should have a definition term !"
+          | true,Some(_),None,_,Eager ->
+            fatal cmd.pos "Property modifiers cannot be used in theorems."
+          | true,Some(_),None,_,Sequen ->
+            fatal cmd.pos "Pattern matching strategy modifiers cannot be \
+                           used in theorems."
+          | false,_,Some(_),Const,_ ->
+            fatal cmd.pos "A definition cannot be a constant."
+          | false,_,Some(_),_,Sequen ->
+            fatal cmd.pos "Pattern matching strategy modifiers cannot be \
+                           used in definitions.";
         end
       in
       let data =
