@@ -367,10 +367,13 @@ let eq_p_command : p_command eq = fun c1 c2 ->
       && List.equal eq_p_arg al1 al2
   | (P_rules(rs1)                , P_rules(rs2)                ) ->
       List.equal eq_p_rule rs1 rs2
-  | (P_definition(ms1,b1,st1,t1,ts_pe1), P_definition(ms2,b2,st2,t2,ts_pe2)) ->
+  | (P_definition(ms1,b1,st1,t1,ts_pe1),
+     P_definition(ms2,b2,st2,t2,ts_pe2))                         ->
       let s1,l1,a1 = st1.elt in
       let s2,l2,a2 = st2.elt in
-      let eq_tactic = fun (ts1,_) (ts2,_) -> (List.equal eq_p_tactic) ts1 ts2 in
+      let eq_tactic =
+        fun (ts1,_) (ts2,_) -> (List.equal eq_p_tactic) ts1 ts2
+      in
       ms1 = ms2 && b1 = b2 && eq_ident s1 s2 && List.equal eq_p_arg l1 l2
       && Option.equal eq_p_term a1 a2 && Option.equal eq_p_term t1 t2
       && Option.equal eq_tactic ts_pe1 ts_pe2

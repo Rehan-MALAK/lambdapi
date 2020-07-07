@@ -84,7 +84,8 @@ let handle_command : state -> Command.t -> command_result =
         Cmd_Proof(pst, expo, ts, data.pdata_stmt_pos, data.pdata_term_pos)
   with Fatal(p,m) -> Cmd_Error(p,m)
 
-let handle_tactic : proof_state -> Terms.expo -> Tactic.t -> tactic_result = fun s e t ->
+let handle_tactic : proof_state -> Terms.expo -> Tactic.t -> tactic_result =
+  fun s e t ->
   let (_, ss, p, finalize) = s in
   try
     let p = Tactics.handle_tactic ss e p t in
