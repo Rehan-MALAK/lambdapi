@@ -35,8 +35,7 @@ let solve ps pos =
     {ps with proof_goals = new_gs_unif @ gs_typ}
   with
   | Unif.Unsolvable ->
-    wrn pos "Unsolvable, try another unification tactic";
-    ps
+    fatal pos "Constraints are unsolvable !"
 
 (** [handle_tactic ss ps tac] tries to apply the tactic [tac] (in the proof
      state [ps]), and returns the new proof state.  This function fails
@@ -70,7 +69,7 @@ let handle_tactic :
   | _                   ->
 
   (* Get the unif goals, the first type goal and the following goals *)
-  let pre_g,g,post_g =
+  let pre_g, g, post_g =
     let rec first_goal_typ pre post =
       match post with
       | [] -> pre,None,post

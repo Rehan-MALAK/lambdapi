@@ -234,8 +234,7 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
           (ts,pe)
         | Some(ts,pe) -> (ts,pe)
       in
-      let sort_unif, _ = Proof.sort_init (Some(a)) None in
-      let goals = sort_unif @ [] in
+      let goals, _ = Proof.goals_of_typ x.pos (Some(a)) None in
       let data =
         data_proof x a cmd impl expo expo x.pos ts pe prop mstrat None goals
       in
@@ -268,7 +267,8 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
       (* Verify modifiers. *)
       let (prop, expo, mstrat) = handle_modifiers ms in
       (* Desugaring of arguments and scoping of [t]. *)
-      let p_t,t = match t with
+      let p_t,t =
+        match t with
         | Some t ->
           let p_t = if xs = [] then t else Pos.none (P_Abst(xs, t)) in
           let t = scope_basic expo p_t in
@@ -284,16 +284,17 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
           (Some(a), Scope.get_implicitness a)
       in
       let ao = Option.map (scope_basic expo) ao in
-      (* If a type [ao] is given, then we check that it is typable by a sort
-         and that [t] has type [a]. Otherwise, we try to infer the type of
-         [t]. Unification goals are collected *)
-      let sort_goals, a    = Proof.sort_init ao t in
+      (* If a type [ao = Some a] is given, then we check that it is typable by
+         a sort and that [t] has type [a]. Otherwise, we try to infer the type
+         of [t]. Unification goals are collected *)
+      let sort_goals, a = Proof.goals_of_typ x.pos ao t in
       (* And the main "type" goal *)
       let proof_term = fresh_meta ~name:x.elt a 0 in
-      let typ_goal = Proof.typ_init proof_term in
+      let typ_goal = Proof.goals_of_meta proof_term in
       let goals = sort_goals @ typ_goal in
       (* Proof script *)
-      let (ts,pe) = match ts_pe,p_t with
+      let (ts,pe) =
+        match ts_pe,p_t with
         | None,Some p_t ->
             let refine = Pos.make cmd.pos (P_tac_refine(p_t)) in
             let ts = [refine] in

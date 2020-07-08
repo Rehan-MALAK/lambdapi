@@ -18,7 +18,7 @@ module Goal :
     (** Representation of a general goal : type, unification *)
     type t =
       | GoalTyp of goal_typ (* The usual proof type goal. *)
-      | GoalUnif of constr (* Two terms we'd like equal in ctxt. *)
+      | GoalUnif of constr (* Two terms we'd like equal in some ctxt. *)
 
     (** [goal_typ_of_meta m] create a goal from the metavariable [m]. *)
     val goal_typ_of_meta : meta -> goal_typ
@@ -74,58 +74,59 @@ type proof_state =
 type t = proof_state
 
 (** [init name a] returns an initial proof state for a theorem  named
-    [name], which statement is represented by the type [a]. Builtin symbols of
-    [builtins] may be used by tactics, and have been declared.
+    [name], which statement is represented by the type [a].
     The list of goals is not initialized *)
 let init : Pos.strloc -> term -> t = fun name a ->
   let proof_term = fresh_meta ~name:name.elt a 0 in
   {proof_name = name; proof_term; proof_goals = []}
 
-(** [typ_init m] returns a goal associated to the meta m *)
-let typ_init : meta -> Goal.t list = fun m ->
+(** [goals_of_meta m] returns a goal associated to the meta m *)
+let goals_of_meta : meta -> Goal.t list = fun m ->
   let goal_typ = Goal.GoalTyp (Goal.goal_typ_of_meta m) in
   [goal_typ]
 
-(** [sort_init typ ter] returns a list of goals corresponding to the
+(** [goals_of_typ typ ter] returns a list of goals corresponding to the
     typability of [typ] by a sort and checking eventually that term
     [ter] has type [typ] *)
-let sort_init : term option -> term option -> Goal.t list * term =
-  fun typ ter ->
-  let goal_unif x = Goal.GoalUnif x in
-  let (typ,sort, to_solve) = match typ,ter with
+let goals_of_typ : Pos.popt -> term option -> term option ->
+  Goal.t list * term =
+  fun pos typ ter ->
+  let (typ,sort, to_solve) =
+    match typ,ter with
     | Some(typ),Some(ter) ->
       let sort, to_solve2 = Infer.infer [] typ in
       let to_solve =
-        begin
-          match sort with
-          | Type | Kind -> Infer.check [] ter typ
-          | _ -> assert false
-        end
+        match sort with
+        | Type | Kind -> Infer.check [] ter typ
+        | _ -> Console.fatal pos "%a has type %a (not a sort)."
+                 pp_term typ pp_term sort
       in
-      typ, sort, to_solve @ to_solve2
+      typ, sort, to_solve2 @ to_solve
     | None,Some(ter) ->
       let typ,to_solve = Infer.infer [] ter in
       let sort,to_solve2 =
-      begin
-        match typ with
-        | Kind -> assert false (* we forbid x := _ -> TYPE *)
-        | _ -> let sort, to_solve2 = Infer.infer [] typ in
-          begin
-            match sort with
-            | Type | Kind -> sort,to_solve2
-            | _ -> assert false
-          end
-      end
+        begin
+          match typ with
+          | Kind -> Console.fatal pos "Forbidded definition x := _ -> TYPE"
+          | _ -> let sort, to_solve2 = Infer.infer [] typ in
+            begin
+              match sort with
+              | Type | Kind -> sort,to_solve2
+              | _ -> Console.fatal pos "The term [%a] does not have type \
+                                        [%a]." pp_term ter pp_term typ
+            end
+        end
       in
-      typ,sort, to_solve @ to_solve2
+      typ,sort, to_solve2 @ to_solve
     | Some(typ),None ->
-      let sort, to_solve2 = Infer.infer [] typ in
+      let sort, to_solve = Infer.infer [] typ in
       begin
         match sort with
-        | Type | Kind -> typ,sort,to_solve2
-        | _ -> assert false
+        | Type | Kind -> typ,sort,to_solve
+        | _ -> Console.fatal pos "%a has type %a (not a sort)."
+                 pp_term typ pp_term sort
       end
-    | None,None    -> assert false
+    | None,None    -> assert false (* already rejected by parser *)
   in
   let to_solve = (* TODO this shoud be removed *)
     try
@@ -139,14 +140,12 @@ let sort_init : term option -> term option -> Goal.t list * term =
   (List.map goal_unif to_solve @ goal_sort), typ
 *)
   let _sort = sort in
-  (List.map goal_unif to_solve), typ
+  (List.map (fun x -> Goal.GoalUnif x) to_solve), typ
 
-
-(** [unif_init cs] returns a list of unification goals corresponding to a
+(** [goals_of_constrs cs] returns a list of unification goals corresponding to a
     list of unification constraints [cs] *)
-let unif_init : constr list -> Goal.t list = fun cs ->
-  let goal_unif x = Goal.GoalUnif x in
-  let goals_unif = List.map goal_unif cs in
+let goals_of_constrs : constr list -> Goal.t list = fun cs ->
+  let goals_unif = List.map (fun x -> Goal.GoalUnif x) cs in
   goals_unif
 
 (** [finished ps] tells whether the proof represented by [ps] is finished. *)
