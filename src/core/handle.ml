@@ -227,7 +227,8 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
       let impl = Scope.get_implicitness a in
       (* We scope the type of the declaration. *)
       let a = scope_basic expo a in
-      let (ts,pe) = match ts_pe with
+      let (ts,pe) =
+        match ts_pe with
         | None ->
           let ts = [] in
           let pe = Pos.make cmd.pos P_proof_end in
