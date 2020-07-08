@@ -91,8 +91,8 @@ let goals_of_meta : meta -> Goal.t list = fun m ->
 let goals_of_typ : Pos.popt -> term option -> term option ->
   Goal.t list * term =
   fun pos typ ter ->
-  let (typ,sort, to_solve) =
-    match typ,ter with
+  let (typ, sort, to_solve) =
+    match typ, ter with
     | Some(typ),Some(ter) ->
       let sort, to_solve2 = Infer.infer [] typ in
       let to_solve =
@@ -103,8 +103,8 @@ let goals_of_typ : Pos.popt -> term option -> term option ->
       in
       typ, sort, to_solve2 @ to_solve
     | None,Some(ter) ->
-      let typ,to_solve = Infer.infer [] ter in
-      let sort,to_solve2 =
+      let typ, to_solve = Infer.infer [] ter in
+      let sort, to_solve2 =
         begin
           match typ with
           | Kind -> Console.fatal pos "Forbidded definition x := _ -> TYPE"
@@ -117,7 +117,7 @@ let goals_of_typ : Pos.popt -> term option -> term option ->
             end
         end
       in
-      typ,sort, to_solve2 @ to_solve
+      typ, sort, to_solve2 @ to_solve
     | Some(typ),None ->
       let sort, to_solve = Infer.infer [] typ in
       begin
