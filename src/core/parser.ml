@@ -609,10 +609,7 @@ let parser statement =
   Pos.in_pos _loc (s,al,a)
 
 let parser proof =
-  ts:tactic* e:proof_end -> (ts, Pos.in_pos _loc_e e)
-
-let parser keyword_begin =
-  _begin_ ts_pe:proof -> ts_pe
+  _begin_ ts:tactic* e:proof_end -> (ts, Pos.in_pos _loc_e e)
 
 (** [!require mp] can be used to require the compilation of a module [mp] when
     it is required as a dependency. This has the effect of importing notations
@@ -661,15 +658,15 @@ let parser cmd =
       -> List.iter (get_ops _loc) ps;
          P_open(ps)
   | mods:modifier* _symbol_ s:ident al:arg* ":" a:term
-      ts_pe:keyword_begin?
+      ts_pe:proof?
       -> P_symbol(mods, s, al, a, ts_pe)
   | _rule_ r:rule rs:{_:_with_ rule}*
       -> P_rules(r::rs)
   | ms:modifier* _definition_ st:statement t:{"≔" term}?
-        ts_pe:keyword_begin?
+        ts_pe:proof?
       -> P_definition(ms,false,st,t,ts_pe)
   | ms:modifier* _theorem_    st:statement t:{"≔" term}?
-        ts_pe:keyword_begin?
+        ts_pe:proof?
       -> P_definition(ms,true ,st,t,ts_pe)
   | _set_ c:config
       -> P_set(c)
