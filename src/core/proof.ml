@@ -15,7 +15,7 @@ module Goal :
       ; goal_hyps : Env.t (* Precomputed scope for a suitable term.       *)
       ; goal_type : term  (* Precomputed type for a suitable term.        *) }
 
-    (** Representation of a general goal : type, unification, special cases *)
+    (** Representation of a general goal : type, unification *)
     type t =
       | GoalTyp of goal_typ (* The usual proof type goal. *)
       | GoalUnif of constr (* Two terms we'd like equal in ctxt. *)
