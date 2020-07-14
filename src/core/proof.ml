@@ -157,12 +157,6 @@ let goals_of_typ : Pos.popt -> term option -> term option ->
   let _sort = sort in
   (List.map (fun x -> Goal.Unif x) to_solve), typ
 
-(** [goals_of_constrs cs] returns a list of unification goals corresponding to a
-    list of unification constraints [cs] *)
-let goals_of_constrs : constr list -> Goal.t list = fun cs ->
-  let goals_unif = List.map (fun x -> Goal.Unif x) cs in
-  goals_unif
-
 (** [finished ps] tells whether the proof represented by [ps] is finished. *)
 let finished : t -> bool = fun ps -> ps.proof_goals = []
 
