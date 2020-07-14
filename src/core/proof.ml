@@ -20,6 +20,14 @@ module Goal :
       | Typ of goal_typ (* The usual proof type goal. *)
       | Unif of constr (* Two terms we'd like equal in some ctxt. *)
 
+    (** Helper functions *)
+    val is_typ  : t -> bool
+    val is_unif : t -> bool
+    val typ : goal_typ -> t
+    val unif : constr  -> t
+    val goal_typ_of : t -> goal_typ
+    val constr_of   : t -> constr
+
     (** [goal_typ_of_meta m] create a goal from the metavariable [m]. *)
     val goal_typ_of_meta : meta -> goal_typ
 
@@ -44,6 +52,13 @@ module Goal :
     type t =
       | Typ of goal_typ (* The usual proof type goal. *)
       | Unif of constr (* Two terms we'd like equal in ctxt. *)
+
+    let is_typ  = function Typ _ -> true  | Unif _ -> false
+    let is_unif = function Typ _ -> false | Unif _ -> true
+    let typ = function x -> (Typ x)
+    let unif = function x -> (Unif x)
+    let goal_typ_of = function | Typ  gt -> gt | _ -> assert false (* TODO *)
+    let constr_of   = function | Unif cs -> cs | _ -> assert false (* TODO *)
 
     let goal_typ_of_meta : meta -> goal_typ = fun m ->
       let (goal_hyps, goal_type) =

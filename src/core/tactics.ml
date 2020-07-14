@@ -12,26 +12,14 @@ open Print
 let log_tact = new_logger 't' "tact" "tactics"
 let log_tact = log_tact.logger
 
-(* Helper functions related to goals *)
-let is_goal_typ = function Goal.Typ _ -> true  | Goal.Unif _ -> false
-let is_unif_typ x = not (is_goal_typ x)
-let goal_unif_of = fun cs -> Goal.Unif cs
-let goal_typ_of  = fun x  -> Goal.Typ x
-let cs_of_goal_unif = function
-  | Goal.Unif cs -> cs
-  | _ -> assert false
-let g_of_goal_typ = function
-  | Goal.Typ g -> g
-  | _ -> assert false
-
 (** [solve ps pos] calls the default solve algorithm on the unification
     goals of the proof state [ps] and does not fail *)
 let solve ps pos =
   try
-    let gs_typ,gs_unif = List.partition is_goal_typ ps.proof_goals in
-    let to_solve = List.map cs_of_goal_unif gs_unif in
+    let gs_typ,gs_unif = List.partition Goal.is_typ ps.proof_goals in
+    let to_solve = List.map Goal.constr_of gs_unif in
     let new_cs = Unif.solve {Unif.empty_problem with to_solve} in
-    let new_gs_unif = List.map goal_unif_of new_cs in
+    let new_gs_unif = List.map Goal.unif new_cs in
     {ps with proof_goals = new_gs_unif @ gs_typ}
   with
   | Unif.Unsolvable ->
@@ -105,7 +93,7 @@ let handle_tactic :
         Unif.solve {Unif.empty_problem with to_solve}
       with Unif.Unsolvable -> to_solve
     in
-    let gs_unif = List.map goal_unif_of to_solve in
+    let gs_unif = List.map Goal.unif to_solve in
     (* Instantiation. *)
     set_meta m (Bindlib.unbox (Bindlib.bind_mvar (Env.vars env) (lift t)));
     (* New subgoals and focus. *)
@@ -114,7 +102,7 @@ let handle_tactic :
     let new_typ_goals = MetaSet.fold add_goal metas [] in
     (* New goals must appear first. *)
     let proof_goals =
-      pre_g @ gs_unif @ (List.map goal_typ_of new_typ_goals) @ post_g
+      pre_g @ gs_unif @ (List.map Goal.typ new_typ_goals) @ post_g
     in
     {ps with proof_goals}
   in
@@ -145,7 +133,7 @@ let handle_tactic :
       (* Infer the type of [t] and count the number of products. *)
       (* NOTE there is room for improvement here. *)
       let (a, to_solve) = Infer.infer (Env.to_ctxt env) t in
-      let goal_sort_unif = List.map goal_unif_of to_solve in
+      let goal_sort_unif = List.map Goal.unif to_solve in
       let ps = {ps with proof_goals = goal_sort_unif @ ps.proof_goals} in
       let nb = Basics.count_products a in
       (* Refine using [t] applied to [nb] wildcards (metavariables). *)
