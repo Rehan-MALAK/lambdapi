@@ -187,7 +187,7 @@ function nextProofPosition(document: TextDocument, proofState : Position, direct
     //Looking for the next line with "proof" in it (or the beggining/end of file)
     let line : string = document.lineAt(current).text;
 
-    while(!line.includes("proof") && current + direction >= 1 && current + direction <= document.lineCount - 1) {
+    while(!line.includes("begin") && current + direction >= 1 && current + direction <= document.lineCount - 1) {
         current += direction;
         line = document.lineAt(current).text;
     }
