@@ -13,15 +13,15 @@ let log_tact = new_logger 't' "tact" "tactics"
 let log_tact = log_tact.logger
 
 (* Helper functions related to goals *)
-let is_goal_typ = function Goal.GoalTyp _ -> true  | Goal.GoalUnif _ -> false
+let is_goal_typ = function Goal.Typ _ -> true  | Goal.Unif _ -> false
 let is_unif_typ x = not (is_goal_typ x)
-let goal_unif_of = fun cs -> Goal.GoalUnif cs
-let goal_typ_of  = fun x  -> Goal.GoalTyp x
+let goal_unif_of = fun cs -> Goal.Unif cs
+let goal_typ_of  = fun x  -> Goal.Typ x
 let cs_of_goal_unif = function
-  | Goal.GoalUnif cs -> cs
+  | Goal.Unif cs -> cs
   | _ -> assert false
 let g_of_goal_typ = function
-  | Goal.GoalTyp g -> g
+  | Goal.Typ g -> g
   | _ -> assert false
 
 (** [solve ps pos] calls the default solve algorithm on the unification
@@ -73,8 +73,8 @@ let handle_tactic :
     let rec first_goal_typ pre post =
       match post with
       | [] -> pre,None,post
-      | (Goal.GoalTyp gt) :: post -> pre,Some(gt),post
-      | (Goal.GoalUnif _ as gu) :: post -> first_goal_typ (pre @ [gu]) post
+      | (Goal.Typ gt) :: post -> pre,Some(gt),post
+      | (Goal.Unif _ as gu) :: post -> first_goal_typ (pre @ [gu]) post
     in
     first_goal_typ [] ps.proof_goals
   in
@@ -160,7 +160,7 @@ let handle_tactic :
     begin
       match g with
       | Some gt ->
-        let new_goal_typ = Goal.GoalTyp (Goal.simpl gt) in
+        let new_goal_typ = Goal.Typ (Goal.simpl gt) in
         let proof_goals = pre_g @ [new_goal_typ] @ post_g in
         {ps with proof_goals}
       | None    ->
@@ -179,7 +179,7 @@ let handle_tactic :
     begin
       match g with
       | Some gt ->
-        let t = Why3_tactic.handle ss tac.pos config (Goal.GoalTyp gt) in
+        let t = Why3_tactic.handle ss tac.pos config (Goal.Typ gt) in
         handle_refine ps t
       | None -> wrn tac.pos "No goal typ" ; ps
     end

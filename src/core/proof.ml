@@ -17,8 +17,8 @@ module Goal :
 
     (** Representation of a general goal : type, unification *)
     type t =
-      | GoalTyp of goal_typ (* The usual proof type goal. *)
-      | GoalUnif of constr (* Two terms we'd like equal in some ctxt. *)
+      | Typ of goal_typ (* The usual proof type goal. *)
+      | Unif of constr (* Two terms we'd like equal in some ctxt. *)
 
     (** [goal_typ_of_meta m] create a goal from the metavariable [m]. *)
     val goal_typ_of_meta : meta -> goal_typ
@@ -42,8 +42,8 @@ module Goal :
       ; goal_type : term  (* Precomputed type for a suitable term.        *) }
 
     type t =
-      | GoalTyp of goal_typ (* The usual proof type goal. *)
-      | GoalUnif of constr (* Two terms we'd like equal in ctxt. *)
+      | Typ of goal_typ (* The usual proof type goal. *)
+      | Unif of constr (* Two terms we'd like equal in ctxt. *)
 
     let goal_typ_of_meta : meta -> goal_typ = fun m ->
       let (goal_hyps, goal_type) =
@@ -82,7 +82,7 @@ let init : Pos.strloc -> term -> t = fun name a ->
 
 (** [goals_of_meta m] returns a goal associated to the meta m *)
 let goals_of_meta : meta -> Goal.t list = fun m ->
-  let goal_typ = Goal.GoalTyp (Goal.goal_typ_of_meta m) in
+  let goal_typ = Goal.Typ (Goal.goal_typ_of_meta m) in
   [goal_typ]
 
 (** [goals_of_typ typ ter] returns a list of goals corresponding to the
@@ -140,12 +140,12 @@ let goals_of_typ : Pos.popt -> term option -> term option ->
   (List.map goal_unif to_solve @ goal_sort), typ
 *)
   let _sort = sort in
-  (List.map (fun x -> Goal.GoalUnif x) to_solve), typ
+  (List.map (fun x -> Goal.Unif x) to_solve), typ
 
 (** [goals_of_constrs cs] returns a list of unification goals corresponding to a
     list of unification constraints [cs] *)
 let goals_of_constrs : constr list -> Goal.t list = fun cs ->
-  let goals_unif = List.map (fun x -> Goal.GoalUnif x) cs in
+  let goals_unif = List.map (fun x -> Goal.Unif x) cs in
   goals_unif
 
 (** [finished ps] tells whether the proof represented by [ps] is finished. *)
@@ -154,8 +154,8 @@ let finished : t -> bool = fun ps -> ps.proof_goals = []
 (** [focus_goal ps] returns the focused goal or fails if there is none. *)
 let focus_goal : Pos.popt -> proof_state -> Env.t * term = fun pos ps ->
   match List.hd ps.proof_goals with
-    | Goal.GoalTyp g       -> Goal.get_type g
-    | Goal.GoalUnif _      -> Console.fatal pos "No remaining typing goals..."
+    | Goal.Typ g       -> Goal.get_type g
+    | Goal.Unif _      -> Console.fatal pos "No remaining typing goals..."
     | exception Failure(_) -> Console.fatal pos "No remaining goals..."
 
 (** [pp_goals oc gl] prints the goal list [gl] to channel [oc]. *)
@@ -165,7 +165,7 @@ let pp_goals : proof_state pp = fun oc ps ->
   | g::gs ->
     Format.fprintf oc "\n== Goals ================================\n";
     match g with
-    | Goal.GoalTyp g ->
+    | Goal.Typ g ->
       let (hyps, a) = Goal.get_type g in
       if hyps <> [] then
         begin
@@ -181,23 +181,23 @@ let pp_goals : proof_state pp = fun oc ps ->
           Format.fprintf oc "\n";
           let print_goal i g =
             match g with
-            | Goal.GoalTyp g ->
+            | Goal.Typ g ->
               let (_, a) = Goal.get_type g in
               Format.fprintf oc "%i. %a\n" (i+1) pp_term a
-            | Goal.GoalUnif cs -> Format.fprintf oc "Unif? %a\n" pp_constr cs
+            | Goal.Unif cs -> Format.fprintf oc "Unif? %a\n" pp_constr cs
           in
           List.iteri print_goal gs
         end
-    | Goal.GoalUnif cs -> Format.fprintf oc "Unif? %a\n" pp_constr cs;
+    | Goal.Unif cs -> Format.fprintf oc "Unif? %a\n" pp_constr cs;
       if gs <> [] then
         begin
           Format.fprintf oc "\n";
           let print_goal i g =
             match g with
-            | Goal.GoalTyp g ->
+            | Goal.Typ g ->
               let (_, a) = Goal.get_type g in
               Format.fprintf oc "%i. %a\n" (i+1) pp_term a
-            | Goal.GoalUnif cs -> Format.fprintf oc "Unif? %a\n" pp_constr cs
+            | Goal.Unif cs -> Format.fprintf oc "Unif? %a\n" pp_constr cs
           in
           List.iteri print_goal gs
         end

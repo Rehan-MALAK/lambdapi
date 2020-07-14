@@ -44,12 +44,12 @@ let json_of_goal g =
     `Assoc ["hname", `String s; "htype", `String t] in
   let open Proof in
   let g_meta = match g with
-    | Goal.GoalTyp g -> Goal.get_meta g
-    | Goal.GoalUnif _ -> raise (Failure "TODO")
+    | Goal.Typ g -> Goal.get_meta g
+    | Goal.Unif _ -> raise (Failure "TODO")
   in
   let hyp, typ = match g with
-    | Goal.GoalTyp g -> Goal.get_type g
-    | Goal.GoalUnif _ -> raise (Failure "TODO")
+    | Goal.Typ g -> Goal.get_type g
+    | Goal.Unif _ -> raise (Failure "TODO")
   in
   let j_env = List.map pr_hyp hyp in
   `Assoc [

@@ -182,8 +182,8 @@ let handle :
   fun ss pos prover_name g ->
   (* Get the goal to prove. *)
   let (hyps, trm) = match g with
-    | Proof.Goal.GoalTyp g -> Proof.Goal.get_type g
-    | Proof.Goal.GoalUnif _ -> assert false
+    | Proof.Goal.Typ g -> Proof.Goal.get_type g
+    | Proof.Goal.Unif _ -> assert false
   in
   (* Get the default or the indicated name of the prover. *)
   let prover_name = Option.get !default_prover prover_name in
@@ -197,8 +197,8 @@ let handle :
   let axiom_name = new_axiom_name () in
   (* Get the meta type of the current goal (with quantified context). *)
   let trm = match g with
-    | Proof.Goal.GoalTyp g -> !((Proof.Goal.get_meta g).meta_type)
-    | Proof.Goal.GoalUnif _ -> assert false
+    | Proof.Goal.Typ g -> !((Proof.Goal.get_meta g).meta_type)
+    | Proof.Goal.Unif _ -> assert false
   in
   (* Add the axiom to the current signature. *)
   let a =
