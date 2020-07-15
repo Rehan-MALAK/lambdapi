@@ -134,10 +134,31 @@ let handle_require_as : popt -> sig_state -> Path.t -> ident -> sig_state =
   let path_map = PathMap.add p id.elt ss.path_map in
   {ss with aliases; path_map}
 
-(** [data_proof] returns the datas needed for the proof script check
-   TODO this is going to changes with the homogenization between
-   definition and theorem *)
-let data_proof x a cmd impl expo pdata_expo pos ts pe prop mstrat d goals =
+(** Symbol properties needed for the signature are packed together *)
+type sig_symbol =
+  { expo   : expo        ;
+    prop   : prop        ;
+    mstrat : match_strat ;
+    x      : ident       ;
+    a      : term        ;
+    impl   : bool list   ;
+    d      : term option ; }
+
+(** Wrapper around Sig_state.add_symbol using the sig_symbol type *)
+let add_symbol : sig_state -> sig_symbol -> sig_state =
+  fun ss {expo;prop;mstrat;x;a;impl;d} ->
+  Sig_state.add_symbol ss expo prop mstrat x a impl d
+
+(** [data_proof] returns the datas needed for the symbol or definition
+   [sig_symbol] in the signature and the [goals] we wish to prove with
+   the proof script [ts pe]. [pdata_expo] set the authorized exposition
+   of the symbols used in the proof script : Public (= only public
+   symbols) or Privat (= public and private symbols) *)
+let data_proof sig_symbol cmd pdata_expo ts pe goals =
+  let x = sig_symbol.x in
+  let a = sig_symbol.a in
+  let d = sig_symbol.d in
+  let pos = x.pos in
   (* Initialize proof state and save configuration data. *)
   let st = Proof.init x a in
   let st = {st with proof_goals = goals} in
@@ -177,17 +198,17 @@ let data_proof x a cmd impl expo pdata_expo pos ts pe prop mstrat d goals =
       (* Add a symbol corresponding to the proof, with a warning. *)
       out 3 "(symb) %s (admit)\n" x.elt;
       wrn cmd.pos "Proof admitted.";
-      Sig_state.add_symbol ss expo prop mstrat x a impl d
+      add_symbol ss sig_symbol
     | P_proof_end   ->
       (* Check that the proof is indeed finished. *)
       if not (Proof.finished st) then
         begin
-          let _ = Tactics.handle_tactic ss expo st (none P_tac_print) in
+          let _ = Tactics.handle_tactic ss pdata_expo st (none P_tac_print) in
           fatal cmd.pos "The proof is not finished."
         end;
       (* Add a symbol corresponding to the proof. *)
       out 3 "(symb) %s (end)\n" x.elt;
-      Sig_state.add_symbol ss expo prop mstrat x a impl d
+      add_symbol ss sig_symbol
   in
   let data =
     { pdata_stmt_pos = pos ; pdata_p_state = st ; pdata_tactics = ts
@@ -236,9 +257,9 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
         | Some(ts,pe) -> (ts,pe)
       in
       let goals, _ = Proof.goals_of_typ x.pos (Some(a)) None in
-      let data =
-        data_proof x a cmd impl expo expo x.pos ts pe prop mstrat None goals
-      in
+      let d = None in
+      let sig_symbol = {expo;prop;mstrat;x;a;impl;d} in
+      let data = data_proof sig_symbol cmd expo ts pe goals in
       (ss, Some(data))
   | P_rules(rs)                ->
       (* Scoping and checking each rule in turn. *)
@@ -327,10 +348,8 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
                          used in definitions."
         | false, _      , _    , _      -> expo
       in
-      let data =
-        data_proof
-          x a cmd impl expo pdata_expo st.pos ts pe prop mstrat t goals
-      in
+      let sig_symbol = {expo;prop;mstrat;x;a;impl;d=t} in
+      let data = data_proof sig_symbol cmd pdata_expo ts pe goals in
       (ss, Some(data))
   | P_set(cfg)                 ->
       let ss =
