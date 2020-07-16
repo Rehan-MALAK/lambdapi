@@ -134,21 +134,6 @@ let handle_require_as : popt -> sig_state -> Path.t -> ident -> sig_state =
   let path_map = PathMap.add p id.elt ss.path_map in
   {ss with aliases; path_map}
 
-(** Symbol properties needed for the signature are packed together *)
-type sig_symbol =
-  { expo   : expo        ;
-    prop   : prop        ;
-    mstrat : match_strat ;
-    ident  : ident       ;
-    typ    : term        ;
-    impl   : bool list   ;
-    def    : term option ; }
-
-(** Wrapper around Sig_state.add_symbol using the sig_symbol type *)
-let add_symbol : sig_state -> sig_symbol -> sig_state =
-  fun ss {expo;prop;mstrat;ident;typ;impl;def} ->
-  Sig_state.add_symbol ss expo prop mstrat ident typ impl def
-
 (** [data_proof] returns the datas needed for the symbol or definition
    [sig_symbol] in the signature and the [goals] we wish to prove with
    the proof script [ts pe]. [pdata_expo] set the authorized exposition
