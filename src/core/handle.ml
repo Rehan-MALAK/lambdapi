@@ -139,15 +139,15 @@ type sig_symbol =
   { expo   : expo        ;
     prop   : prop        ;
     mstrat : match_strat ;
-    x      : ident       ;
-    a      : term        ;
+    ident  : ident       ;
+    typ    : term        ;
     impl   : bool list   ;
-    d      : term option ; }
+    def    : term option ; }
 
 (** Wrapper around Sig_state.add_symbol using the sig_symbol type *)
 let add_symbol : sig_state -> sig_symbol -> sig_state =
-  fun ss {expo;prop;mstrat;x;a;impl;d} ->
-  Sig_state.add_symbol ss expo prop mstrat x a impl d
+  fun ss {expo;prop;mstrat;ident;typ;impl;def} ->
+  Sig_state.add_symbol ss expo prop mstrat ident typ impl def
 
 (** [data_proof] returns the datas needed for the symbol or definition
    [sig_symbol] in the signature and the [goals] we wish to prove with
@@ -155,12 +155,12 @@ let add_symbol : sig_state -> sig_symbol -> sig_state =
    of the symbols used in the proof script : Public (= only public
    symbols) or Privat (= public and private symbols) *)
 let data_proof sig_symbol cmd pdata_expo ts pe goals =
-  let x = sig_symbol.x in
-  let a = sig_symbol.a in
-  let d = sig_symbol.d in
-  let pos = x.pos in
+  let ident = sig_symbol.ident in
+  let typ   = sig_symbol.typ   in
+  let def   = sig_symbol.def   in
+  let pos = ident.pos in
   (* Initialize proof state and save configuration data. *)
-  let st = Proof.init x a in
+  let st = Proof.init ident typ in
   let st = {st with proof_goals = goals} in
   Console.push_state ();
   (* Build proof checking data. *)
@@ -173,19 +173,22 @@ let data_proof sig_symbol cmd pdata_expo ts pe goals =
     | _ ->
       let st = Tactics.solve st pos in
       (* We check that no metavariable remains. *)
-      if Basics.has_metas true a then
+      if Basics.has_metas true typ then
         begin
-          fatal_msg "The type of [%s] has unsolved metavariables.\n" x.elt;
-          fatal x.pos "We have %s : %a." x.elt pp_term a
+          fatal_msg "The type of [%s] has unsolved metavariables.\n"
+            ident.elt;
+          fatal ident.pos "We have %s : %a." ident.elt pp_term typ
         end;
       begin
-        match d with
+        match def with
         | Some(t) ->
           if Basics.has_metas true t then
             begin
               fatal_msg
-                "The definition of [%s] has unsolved metavariables.\n" x.elt;
-              fatal x.pos "We have %s : %a ≔ %a." x.elt pp_term a pp_term t
+                "The definition of [%s] has unsolved metavariables.\n"
+                ident.elt;
+              fatal ident.pos "We have %s : %a ≔ %a."
+                ident.elt pp_term typ pp_term t
             end;
         | None -> ()
       end;
@@ -196,7 +199,7 @@ let data_proof sig_symbol cmd pdata_expo ts pe goals =
       if Proof.finished st then
         wrn cmd.pos "The proof is finished. You can use 'end' instead.";
       (* Add a symbol corresponding to the proof, with a warning. *)
-      out 3 "(symb) %s (admit)\n" x.elt;
+      out 3 "(symb) %s (admit)\n" ident.elt;
       wrn cmd.pos "Proof admitted.";
       add_symbol ss sig_symbol
     | P_proof_end   ->
@@ -207,7 +210,7 @@ let data_proof sig_symbol cmd pdata_expo ts pe goals =
           fatal cmd.pos "The proof is not finished."
         end;
       (* Add a symbol corresponding to the proof. *)
-      out 3 "(symb) %s (end)\n" x.elt;
+      out 3 "(symb) %s (end)\n" ident.elt;
       add_symbol ss sig_symbol
   in
   let data =
@@ -257,8 +260,7 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
         | Some(ts,pe) -> (ts,pe)
       in
       let goals, _ = Proof.goals_of_typ x.pos (Some(a)) None in
-      let d = None in
-      let sig_symbol = {expo;prop;mstrat;x;a;impl;d} in
+      let sig_symbol = {expo;prop;mstrat;ident=x;typ=a;impl;def=None} in
       let data = data_proof sig_symbol cmd expo ts pe goals in
       (ss, Some(data))
   | P_rules(rs)                ->
@@ -348,7 +350,7 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
                          used in definitions."
         | false, _      , _    , _      -> expo
       in
-      let sig_symbol = {expo;prop;mstrat;x;a;impl;d=t} in
+      let sig_symbol = {expo;prop;mstrat;ident=x;typ=a;impl;def=t} in
       let data = data_proof sig_symbol cmd pdata_expo ts pe goals in
       (ss, Some(data))
   | P_set(cfg)                 ->

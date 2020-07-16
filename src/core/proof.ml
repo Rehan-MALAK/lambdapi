@@ -57,8 +57,12 @@ module Goal :
     let is_unif = function Typ _ -> false | Unif _ -> true
     let typ = function x -> (Typ x)
     let unif = function x -> (Unif x)
-    let goal_typ_of = function | Typ  gt -> gt | _ -> assert false (* TODO *)
-    let constr_of   = function | Unif cs -> cs | _ -> assert false (* TODO *)
+    let goal_typ_of = function
+      | Typ  gt -> gt
+      | _ -> Console.fatal None "Unif goal instead of a type goal"
+    let constr_of   = function
+      | Unif cs -> cs
+      | _ -> Console.fatal None "Unif goal instead of a type goal"
 
     let goal_typ_of_meta : meta -> goal_typ = fun m ->
       let (goal_hyps, goal_type) =
