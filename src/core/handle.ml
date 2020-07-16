@@ -128,18 +128,20 @@ let handle_modifiers : p_modifier loc list -> (prop * expo * match_strat) =
    [ss] as the signature state. On success, an updated signature state is
    returned. *)
 let handle_require_as : popt -> sig_state -> Path.t -> ident -> sig_state =
-    fun pos ss p id ->
+  fun pos ss p id ->
   let ss = handle_require false pos ss p in
   let aliases = StrMap.add id.elt p ss.aliases in
   let path_map = PathMap.add p id.elt ss.path_map in
   {ss with aliases; path_map}
 
 (** [data_proof] returns the datas needed for the symbol or definition
-   [sig_symbol] in the signature and the [goals] we wish to prove with
-   the proof script [ts pe]. [pdata_expo] set the authorized exposition
-   of the symbols used in the proof script : Public (= only public
-   symbols) or Privat (= public and private symbols) *)
-let data_proof sig_symbol cmd pdata_expo ts pe goals =
+   [sig_symbol] to be added in the signature and the [goals] we wish to prove
+   with the proof script [ts pe]. [pdata_expo] sets the authorized exposition
+   of the symbols used in the proof script : Public (= only public symbols)
+   or Privat (= public and private symbols) *)
+let data_proof : sig_symbol -> p_command -> expo -> p_tactic list ->
+  p_proof_end loc -> Proof.Goal.t list -> proof_data =
+  fun sig_symbol cmd pdata_expo ts pe goals ->
   let ident = sig_symbol.ident in
   let typ   = sig_symbol.typ   in
   let def   = sig_symbol.def   in
