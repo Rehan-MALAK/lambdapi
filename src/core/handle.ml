@@ -147,18 +147,18 @@ let data_proof : sig_symbol -> p_command -> expo -> p_tactic list ->
   let def   = sig_symbol.def   in
   let pos = ident.pos in
   (* Initialize proof state and save configuration data. *)
-  let st = Proof.init ident typ in
-  let st = {st with proof_goals = goals} in
+  let ps = Proof.init ident typ in
+  let ps = {ps with proof_goals = goals} in
   Console.push_state ();
   (* Build proof checking data. *)
-  let finalize ss st =
+  let finalize ss ps =
     Console.pop_state ();
     match pe.elt with
     | P_proof_abort ->
       (* Just ignore the command, with a warning. *)
       wrn cmd.pos "Proof aborted."; ss
     | _ ->
-      let st = Tactics.solve st pos in
+      let ps = Tactics.solve ps pos in
       (* We check that no metavariable remains. *)
       if Basics.has_metas true typ then
         begin
@@ -183,7 +183,7 @@ let data_proof : sig_symbol -> p_command -> expo -> p_tactic list ->
     | P_proof_abort -> assert false (* Handled above *)
     | P_proof_admit ->
       (* If the proof is finished, display a warning. *)
-      if Proof.finished st then
+      if Proof.finished ps then
         wrn cmd.pos "The proof is finished. You can use 'end' instead.";
       (* Add a symbol corresponding to the proof, with a warning. *)
       out 3 "(symb) %s (admit)\n" ident.elt;
@@ -191,9 +191,9 @@ let data_proof : sig_symbol -> p_command -> expo -> p_tactic list ->
       add_symbol ss sig_symbol
     | P_proof_end   ->
       (* Check that the proof is indeed finished. *)
-      if not (Proof.finished st) then
+      if not (Proof.finished ps) then
         begin
-          let _ = Tactics.handle_tactic ss pdata_expo st (none P_tac_print) in
+          let _ = Tactics.handle_tactic ss pdata_expo ps (none P_tac_print) in
           fatal cmd.pos "The proof is not finished."
         end;
       (* Add a symbol corresponding to the proof. *)
@@ -201,7 +201,7 @@ let data_proof : sig_symbol -> p_command -> expo -> p_tactic list ->
       add_symbol ss sig_symbol
   in
   let data =
-    { pdata_stmt_pos = pos ; pdata_p_state = st ; pdata_tactics = ts
+    { pdata_stmt_pos = pos ; pdata_p_state = ps ; pdata_tactics = ts
     ; pdata_finalize = finalize ; pdata_term_pos = pe.pos
     ; pdata_expo = pdata_expo }
   in
