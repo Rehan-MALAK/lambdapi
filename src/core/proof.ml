@@ -59,10 +59,10 @@ module Goal :
     let unif = function x -> (Unif x)
     let goal_typ_of = function
       | Typ  gt -> gt
-      | _ -> Console.fatal None "Unif goal instead of a type goal"
+      | _ -> failwith "Internal error : not a type goal"
     let constr_of   = function
       | Unif cs -> cs
-      | _ -> Console.fatal None "Unif goal instead of a type goal"
+      | _ -> failwith "Internal error : not an unification goal"
 
     let goal_typ_of_meta : meta -> goal_typ = fun m ->
       let (goal_hyps, goal_type) =
@@ -113,30 +113,30 @@ let goals_of_typ : Pos.popt -> term option -> term option ->
   let (typ, sort, to_solve) =
     match typ, ter with
     | Some(typ),Some(ter) ->
-      let sort, to_solve2 = Infer.infer [] typ in
-      let to_solve =
+      let sort, to_solve1 = Infer.infer [] typ in
+      let to_solve2 =
         match sort with
         | Type | Kind -> Infer.check [] ter typ
         | _ -> Console.fatal pos "%a has type %a (not a sort)."
                  pp_term typ pp_term sort
       in
-      typ, sort, to_solve2 @ to_solve
+      typ, sort, to_solve1 @ to_solve2
     | None,Some(ter) ->
-      let typ, to_solve = Infer.infer [] ter in
-      let sort, to_solve2 =
+      let typ, to_solve2 = Infer.infer [] ter in
+      let sort, to_solve1 =
         begin
           match typ with
           | Kind -> Console.fatal pos "Forbidded definition x := _ -> TYPE"
-          | _ -> let sort, to_solve2 = Infer.infer [] typ in
+          | _ -> let sort, to_solve1 = Infer.infer [] typ in
             begin
               match sort with
-              | Type | Kind -> sort,to_solve2
-              | _ -> Console.fatal pos "The term [%a] does not have type \
-                                        [%a]." pp_term ter pp_term typ
+              | Type | Kind -> sort,to_solve1
+              | _ -> Console.fatal pos "[%a] has type %a (not a sort)."
+                                        pp_term typ pp_term sort
             end
         end
       in
-      typ, sort, to_solve2 @ to_solve
+      typ, sort, to_solve1 @ to_solve2
     | Some(typ),None ->
       let sort, to_solve = Infer.infer [] typ in
       begin

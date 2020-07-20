@@ -304,18 +304,19 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
       let typ_goal = Proof.goals_of_meta proof_term in
       let goals = sort_goals @ typ_goal in
       (* Proof script *)
+      if ts_pe = None && p_t = None then
+        fatal cmd.pos "no proof script nor term definition";
       let (ts,pe) =
-        match ts_pe,p_t with
-        | None,Some p_t ->
-            let refine = Pos.make cmd.pos (P_tac_refine(p_t)) in
-            let ts = [refine] in
-            let pe = Pos.make cmd.pos P_proof_end in
-            (ts,pe)
-        | Some(ts,pe),None -> (ts,pe)
-        | Some _, Some _ ->
-            fatal cmd.pos "Proof script and proof_term definition !?"
-        | None, None  ->
-            fatal cmd.pos "NO Proof script and NO proof_term definition !?"
+        let (ts,pe) =
+          match ts_pe with
+          | None -> ([], Pos.make cmd.pos P_proof_end)
+          | Some(ts,pe) -> (ts,pe)
+        in
+        match p_t with
+        | Some p_t ->
+          let refine = Pos.make cmd.pos (P_tac_refine(p_t)) in
+          (refine::ts, pe)
+        | None -> (ts,pe)
       in
       (* Depending on opacity : theorem = false / definition = true *)
       let pdata_expo =
