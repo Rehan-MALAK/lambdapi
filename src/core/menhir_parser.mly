@@ -272,49 +272,37 @@ line:
   | ms=modifier* KW_DEF s=ID COLON a=term DEFEQ t=term DOT
     {
       let st = make_pos $loc (make_pos $loc s,[],Some(a)) in
-      let t = P_definition
-          (ms, false, st, Some(t), None)
-      in
+      let t = P_definition(ms, false, st, Some(t), None) in
       make_pos $loc t
     }
   | ms=modifier* KW_DEF s=ID DEFEQ t=term DOT
     {
       let st = make_pos $loc (make_pos $loc s,[],None) in
-      let t = P_definition
-          (ms, false, st, Some(t), None)
-      in
+      let t = P_definition (ms, false, st, Some(t), None) in
       make_pos $loc t
     }
   | ms=modifier* KW_DEF s=ID ps=param+ COLON a=term DEFEQ t=term DOT
     {
       let st = make_pos $loc (make_pos $loc s,ps,Some(a)) in
-      let t = P_definition
-          (ms, false, st, Some(t), None)
-      in
+      let t = P_definition (ms, false, st, Some(t), None) in
       make_pos $loc t
     }
   | ms=modifier* KW_DEF s=ID ps=param+ DEFEQ t=term DOT
     {
       let st = make_pos $loc (make_pos $loc s,ps,None) in
-      let t = P_definition
-          (ms, false, st, Some(t), None)
-      in
+      let t = P_definition (ms, false, st, Some(t), None) in
       make_pos $loc t
     }
   | ms=modifier* KW_THM s=ID COLON a=term DEFEQ t=term DOT
     {
       let st = make_pos $loc (make_pos $loc s,[],Some(a)) in
-      let t = P_definition
-          (ms, true , st, Some(t), None)
-      in
+      let t = P_definition (ms, true , st, Some(t), None) in
       make_pos $loc t
     }
   | ms=modifier* KW_THM s=ID ps=param+ COLON a=term DEFEQ t=term DOT
     {
       let st = make_pos $loc (make_pos $loc s,ps,Some(a)) in
-      let t = P_definition
-          (ms, true , st, Some(t), None)
-      in
+      let t = P_definition (ms, true , st, Some(t), None) in
       make_pos $loc t
     }
   | rs=rule+ DOT {
