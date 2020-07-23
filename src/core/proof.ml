@@ -2,7 +2,6 @@
 
 open Timed
 open Extra
-open Pos
 open Terms
 open Print
 
@@ -91,13 +90,6 @@ type proof_state =
 
 (** Short synonym for qualified use. *)
 type t = proof_state
-
-(** [init name a] returns an initial proof state for a theorem  named
-    [name], which statement is represented by the type [a].
-    The list of goals is not initialized *)
-let init : Pos.strloc -> term -> t = fun name a ->
-  let proof_term = fresh_meta ~name:name.elt a 0 in
-  {proof_name = name; proof_term; proof_goals = []}
 
 (** [goals_of_meta m] returns a goal associated to the meta m *)
 let goals_of_meta : meta -> Goal.t list = fun m ->

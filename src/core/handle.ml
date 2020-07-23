@@ -147,8 +147,8 @@ let data_proof : sig_symbol -> p_command -> expo -> p_tactic list ->
   let def   = sig_symbol.def   in
   let pos = ident.pos in
   (* Initialize proof state and save configuration data. *)
-  let ps = Proof.init ident typ in
-  let ps = {ps with proof_goals = goals} in
+  let proof_term = fresh_meta ~name:ident.elt typ 0 in
+  let ps = Proof.{proof_name = ident ; proof_term ; proof_goals = goals} in
   Console.push_state ();
   (* Build proof checking data. *)
   let finalize ss ps =
