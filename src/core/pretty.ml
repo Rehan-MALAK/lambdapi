@@ -220,31 +220,42 @@ let pp_command : p_command pp = fun oc cmd ->
       out "require %a as %a" (pp_path cmd.pos) p (pp_path_elt i.pos) i.elt
   | P_open(ps)                      ->
       List.iter (out "open %a" (pp_path cmd.pos)) ps
-  | P_symbol(ms,s,args,a,_) (* TODO *) ->
-      out "@[<hov 2>%asymbol %a"
-        (Format.pp_print_list pp_modifier) ms pp_ident s;
-      List.iter (out " %a" pp_p_arg) args;
-      out " :@ @[<hov>%a@]" pp_p_term a
+  | P_symbol(ms,op,st,t,ts_pe) ->
+    let is_defin {elt; _} = match elt with P_prop(Defin) -> true | _ -> false in
+    begin
+      match List.exists is_defin ms with
+      | true ->
+        let s,args,ao = st.elt in
+        let def_or_theo = if op then "theorem" else "definition" in
+        out "@[<hov 2>%a%s %a"
+          (Format.pp_print_list pp_modifier) ms def_or_theo pp_ident s;
+        List.iter (out " %a" pp_p_arg) args;
+        Option.iter (out " : @[<hov>%a@]" pp_p_term) ao;
+        Option.iter (out " ≔ @[<hov>%a@]@]" pp_p_term) t;
+        begin
+          match ts_pe with
+          | Some(ts,pe) ->
+            out "proof@.";
+            List.iter (out "  @[<hov>%a@]@." pp_p_tactic) ts;
+            out "%a" pp_p_proof_end pe.elt
+          | None -> ()
+        end
+      | false ->
+        let (s,args,a) = st.elt in
+        let a =
+          match a with
+          | Some(a) -> a
+          | None -> failwith "Internal error : P_symbol has a type"
+        in
+        out "@[<hov 2>%asymbol %a"
+          (Format.pp_print_list pp_modifier) ms pp_ident s;
+        List.iter (out " %a" pp_p_arg) args;
+        out " :@ @[<hov>%a@]" pp_p_term a
+    end
   | P_rules([])                     -> ()
   | P_rules(r::rs)                  ->
       out "%a" (pp_p_rule true) r;
       List.iter (out "%a" (pp_p_rule false)) rs
-  | P_definition(ms,op,st,t,ts_pe) ->
-    let s,args,ao = st.elt in
-    let def_or_theo = if op then "theorem" else "definition" in
-      out "@[<hov 2>%a%s %a"
-        (Format.pp_print_list pp_modifier) ms def_or_theo pp_ident s;
-      List.iter (out " %a" pp_p_arg) args;
-      Option.iter (out " : @[<hov>%a@]" pp_p_term) ao;
-      Option.iter (out " ≔ @[<hov>%a@]@]" pp_p_term) t;
-      begin
-        match ts_pe with
-        | Some(ts,pe) ->
-          out "proof@.";
-          List.iter (out "  @[<hov>%a@]@." pp_p_tactic) ts;
-          out "%a" pp_p_proof_end pe.elt
-        | None -> ()
-      end
   | P_set(P_config_builtin(n,i))    ->
       out "set builtin %S ≔ %a" n pp_qident i
   | P_set(P_config_unop(unop))      ->

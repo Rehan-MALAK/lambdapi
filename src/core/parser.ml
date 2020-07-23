@@ -309,6 +309,10 @@ let escaped_ident : bool -> string Earley.grammar = fun with_delim ->
 let escaped_ident_no_delim = escaped_ident false
 let escaped_ident = escaped_ident true
 
+(** Add the "definable" modifier by default. *)
+let add_defin : pos -> p_modifier loc list -> p_modifier loc list =
+     fun loc ms -> Pos.in_pos loc (P_prop(Defin)) :: ms
+
 (** Any identifier (regular or escaped). *)
 let parser any_ident =
   | id:regular_ident -> KW.check id; id
@@ -659,15 +663,18 @@ let parser cmd =
          P_open(ps)
   | mods:modifier* _symbol_ s:ident al:arg* ":" a:term
       ts_pe:proof?
-      -> P_symbol(mods, s, al, a, ts_pe)
+      -> let st = Pos.in_pos _loc (s,al,Some(a)) in
+         P_symbol(mods, false, st, None, ts_pe)
   | _rule_ r:rule rs:{_:_with_ rule}*
       -> P_rules(r::rs)
   | ms:modifier* _definition_ st:statement t:{"≔" term}?
         ts_pe:proof?
-      -> P_definition(ms,false,st,t,ts_pe)
+      -> let ms = add_defin _loc ms in
+      P_symbol(ms,false,st,t,ts_pe)
   | ms:modifier* _theorem_    st:statement t:{"≔" term}?
         ts_pe:proof?
-      -> P_definition(ms,true ,st,t,ts_pe)
+      -> let ms = add_defin _loc ms in
+      P_symbol(ms,true ,st,t,ts_pe)
   | _set_ c:config
       -> P_set(c)
   | q:query

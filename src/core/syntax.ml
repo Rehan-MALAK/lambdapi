@@ -215,15 +215,12 @@ type p_command_aux =
   (** Require as statement. *)
   | P_open       of p_module_path list
   (** Open statement. *)
-  | P_symbol     of p_modifier loc list * ident * p_arg list * p_type
+  | P_symbol     of p_modifier loc list * bool * p_statement
+                   * p_term option
                    * (p_tactic list * p_proof_end loc) option
   (** Symbol declaration. *)
   | P_rules      of p_rule list
   (** Rewriting rule declarations. *)
-  | P_definition of p_modifier loc list * bool * p_statement
-                    * p_term option
-                    * (p_tactic list * p_proof_end loc) option
-  (** Definition or theorem (opaque) of a symbol (unfoldable). *)
   | P_set        of p_config
   (** Set the configuration. *)
   | P_query      of p_query
@@ -361,14 +358,8 @@ let eq_p_command : p_command eq = fun c1 c2 ->
      List.equal (=) ps1 ps2
   | (P_require_as(p1,id1)  , P_require_as(p2,id2)              ) ->
      p1 = p2 && id1.elt = id2.elt
-  | (P_symbol(m1,s1,al1,a1,_), P_symbol(m2,s2,al2,a2,_)) ->
-    (* TODO *)
-      m1 = m2 && eq_ident s1 s2 && eq_p_term a1 a2
-      && List.equal eq_p_arg al1 al2
-  | (P_rules(rs1)                , P_rules(rs2)                ) ->
-      List.equal eq_p_rule rs1 rs2
-  | (P_definition(ms1,b1,st1,t1,ts_pe1),
-     P_definition(ms2,b2,st2,t2,ts_pe2))                         ->
+  | (P_symbol(ms1,b1,st1,t1,ts_pe1),
+     P_symbol(ms2,b2,st2,t2,ts_pe2))                         ->
       let s1,l1,a1 = st1.elt in
       let s2,l2,a2 = st2.elt in
       let eq_tactic =
@@ -377,6 +368,8 @@ let eq_p_command : p_command eq = fun c1 c2 ->
       ms1 = ms2 && b1 = b2 && eq_ident s1 s2 && List.equal eq_p_arg l1 l2
       && Option.equal eq_p_term a1 a2 && Option.equal eq_p_term t1 t2
       && Option.equal eq_tactic ts_pe1 ts_pe2
+  | (P_rules(rs1)                , P_rules(rs2)                ) ->
+      List.equal eq_p_rule rs1 rs2
   | (P_set(c1)                   , P_set(c2)                   ) ->
       eq_p_config c1 c2
   | (P_query(q1)                 , P_query(q2)                 ) ->
