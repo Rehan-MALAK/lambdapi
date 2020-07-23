@@ -46,7 +46,7 @@ type proof_data =
   ; pdata_p_state  : Proof.t  (* Initial proof state for the proof.  *)
   ; pdata_tactics  : p_tactic list (* Tactics for the proof.         *)
   ; pdata_finalize : sig_state -> Proof.t -> sig_state (* Finalizer. *)
-  ; pdata_term_pos : Pos.popt (* Position of the proof's terminator. *)
+  ; pdata_end_pos : Pos.popt (* Position of the proof's terminator. *)
   ; pdata_expo     : Terms.expo (* Allow use of private symbols      *) }
 
 (** [handle_open pos ss p] handles the command [open p] with [ss] as the
@@ -202,7 +202,7 @@ let data_proof : sig_symbol -> p_command -> expo -> p_tactic list ->
   in
   let data =
     { pdata_stmt_pos = pos ; pdata_p_state = ps ; pdata_tactics = ts
-    ; pdata_finalize = finalize ; pdata_term_pos = pe.pos
+    ; pdata_finalize = finalize ; pdata_end_pos = pe.pos
     ; pdata_expo = pdata_expo }
   in
   data

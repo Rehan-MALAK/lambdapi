@@ -81,7 +81,7 @@ let handle_command : state -> Command.t -> command_result =
         let pst = (t, ss, data.pdata_p_state, data.pdata_finalize) in
         let ts = data.pdata_tactics in
         let expo = data.pdata_expo in
-        Cmd_Proof(pst, expo, ts, data.pdata_stmt_pos, data.pdata_term_pos)
+        Cmd_Proof(pst, expo, ts, data.pdata_stmt_pos, data.pdata_end_pos)
   with Fatal(p,m) -> Cmd_Error(p,m)
 
 let handle_tactic : proof_state -> Terms.expo -> Tactic.t -> tactic_result =
