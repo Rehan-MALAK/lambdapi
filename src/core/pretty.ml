@@ -221,7 +221,11 @@ let pp_command : p_command pp = fun oc cmd ->
   | P_open(ps)                      ->
       List.iter (out "open %a" (pp_path cmd.pos)) ps
   | P_symbol(ms,op,st,t,ts_pe) ->
-    let is_defin {elt; _} = match elt with P_prop(Defin) -> true | _ -> false in
+    let is_defin {elt; _} =
+      match elt with
+      | P_prop(Defin) -> true
+      | _ -> false
+    in
     begin
       match List.exists is_defin ms with
       | true ->

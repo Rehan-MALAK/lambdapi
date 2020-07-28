@@ -228,7 +228,11 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
      (List.fold_left (handle_open cmd.pos) ss ps, None)
   | P_symbol(ms, op, st, t, ts_pe) ->
     let x,xs,ao = st.elt in
-    let is_defin {elt; _} = match elt with P_prop(Defin) -> true | _ -> false in
+    let is_defin {elt; _} =
+      match elt with
+      | P_prop(Defin) -> true
+      | _ -> false
+    in
     let already_defined = List.exists is_defin ms in
     (* Verify modifiers. *)
     let (prop, expo, mstrat) = handle_modifiers ms in
@@ -256,9 +260,9 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
               (Some(a), Scope.get_implicitness a)
           in
           let ao = Option.map (scope_basic expo) ao in
-          (* If a type [ao = Some a] is given, then we check that it is typable by
-             a sort and that [t] has type [a]. Otherwise, we try to infer the type
-             of [t]. Unification goals are collected *)
+          (* If a type [ao = Some a] is given, then we check that it is
+             typable by a sort and that [t] has type [a]. Otherwise, we
+             try to infer thetype of [t]. Unification goals are collected *)
           let sort_goals, a = Proof.goals_of_typ x.pos ao t in
           (* And the main "type" goal *)
           let proof_term = fresh_meta ~name:x.elt a 0 in
