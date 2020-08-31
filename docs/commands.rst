@@ -110,6 +110,9 @@ moment, the verification is left to the user.
    ```rule_order.lp`` <../tests/OK/rule_order.lp>`__.
    *WARNING:* using this modifier can break important properties.
 
+- ``opaque``: means for a symbol that its term definition (explicitly given
+   or incrementally builded with a proof-script) will be dropped
+
 **Implicit arguments:** Some function symbol arguments can be declared
 as implicit meaning that they must not be given by the user later.
 Implicit arguments are replaced by ``_`` at parsing time, generating

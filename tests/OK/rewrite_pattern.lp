@@ -89,7 +89,7 @@ set builtin "eqind" ≔ eqind
 set builtin "refl"  ≔ refl
 
 // Symmetry of the equality (first option, rewrite).
-theorem eq_sym : Πa x y, P (eq a x y) → P (eq a y x)
+theorem eq_sym : Πa x y, P (eq a x y) → P (eq a y x) ≔
 begin
   assume a x y h
   rewrite h
@@ -97,14 +97,14 @@ begin
 end
 
 // Symmetry of the equality (second option, by hand).
-theorem eq_sym_other_1 : Πa x y, P (eq a x y) → P (eq a y x)
+theorem eq_sym_other_1 : Πa x y, P (eq a x y) → P (eq a y x) ≔
 begin
   assume a x y h
   refine eqind a x y h (λz, eq a y z) (refl a y)
 end
 
 // Symmetry of the equality (third option, by hand with a wildcard).
-theorem eq_sym_other_2 : Πa x y, P (eq a x y) → P (eq a y x)
+theorem eq_sym_other_2 : Πa x y, P (eq a x y) → P (eq a y x) ≔
 begin
   assume a x y h
   refine eqind a x y h (λz, eq a y z) _
@@ -113,14 +113,14 @@ begin
 end
 
 // [s] is compatible with Leibniz equality.
-theorem s_eq : Πx y, P (eq nat x y) → P (eq nat (s x) (s y))
+theorem s_eq : Πx y, P (eq nat x y) → P (eq nat (s x) (s y)) ≔
 begin
   assume x y xy
   refine eqind nat x y xy (λz, eq nat (s z) (s y)) (refl nat (s y))
 end
 
 // [z] is right neutral for add.
-theorem add0r : Πn, P (eq nat (add n z) n)
+theorem add0r : Πn, P (eq nat (add n z) n) ≔
 begin
   // FIXME try to infer nat.
   // FIXME try to infer the predicate
@@ -135,7 +135,7 @@ begin
 end
 
 // [Π n m, n + S m = S (n+m)]
-theorem add_succ_r : Πn m, P (eq nat (add n (s m)) (s (add n m)))
+theorem add_succ_r : Πn m, P (eq nat (add n (s m)) (s (add n m))) ≔
 begin
   assume n m
   refine nat_ind (λn, eq nat (add n (s m)) (s (add n m))) ?CZ[n;m] ?CS[n;m] n
@@ -151,7 +151,7 @@ begin
 end
 
 // Commutativity of the addition.
-theorem addcomm : Πn m, P (eq nat (add n m) (add m n))
+theorem addcomm : Πn m, P (eq nat (add n m) (add m n)) ≔
 begin
   assume n m
   refine nat_ind (λ (n:N), eq nat (add n m) (add m n)) ?CZ[n;m] ?CS[n;m] n
@@ -168,7 +168,7 @@ begin
 end
 
 // Adding the same value is the same as multiplying by 2.
-theorem add_same_times_two : Πx, P (eq nat (add x x) (mul 2 x))
+theorem add_same_times_two : Πx, P (eq nat (add x x) (mul 2 x)) ≔
 begin
   assume x
   simpl
@@ -181,7 +181,7 @@ end
 //////////////////////////////////////////////////////////////////////////////
 
 // This stupid test directly uses the addcomm lemma.
-theorem rewriteTest1 : Πa b, P (eq nat (add a b) (add b a))
+theorem rewriteTest1 : Πa b, P (eq nat (add a b) (add b a)) ≔
 begin
   assume a b
   //print
@@ -190,7 +190,7 @@ begin
 end
 
 // This stupid test directly uses the addcomm lemma in one place.
-theorem rewriteTest2 : Πa b, P (eq nat (add (add a b) b) (add (add b a) b))
+theorem rewriteTest2 : Πa b, P (eq nat (add (add a b) b) (add (add b a) b)) ≔
 begin
   assume a b
   //print
@@ -201,7 +201,7 @@ end
 // This stupid test directly uses the addcomm lemma in two places.
 theorem rewriteTest3 : Πa b,
   P (eq nat (add (add (add a b) b) (add (add a b) b))
-            (add (add (add b a) b) (add (add b a) b)))
+            (add (add (add b a) b) (add (add b a) b))) ≔
 begin
   assume a b
   //print
@@ -212,7 +212,7 @@ end
 // An easy contextual rewrite.
 theorem rewriteTest4 : Πa b,
   P (eq nat (add (add (add a b) (add a b)) a)
-            (add (add (add b a) (add a b)) a))
+            (add (add (add b a) (add a b)) a)) ≔
 begin
   assume a b
   rewrite [x in (add x (add a b))] addcomm
@@ -221,7 +221,7 @@ end
 
 // A slightly more complicated contextual rewrite.
 theorem rewriteTest5 : Πa b,
-  P (eq nat (add (add a b) (add a b)) (add (add b a) (add b a)))
+  P (eq nat (add (add a b) (add a b)) (add (add b a) (add b a))) ≔
 begin
   assume a b
   rewrite [x in add x x] addcomm
@@ -230,7 +230,7 @@ end
 
 // An even more complicated rewrite, combining both wildcards and binders.
 theorem rewriteTest6 : Πa b,
-  P (eq nat (add (add (add a b) a) a) (add (add a (add a b)) a))
+  P (eq nat (add (add (add a b) a) a) (add (add a (add a b)) a)) ≔
 begin
   // print
   assume a b
@@ -243,7 +243,7 @@ symbol silly_axiom : Πm n, P (eq nat m n)
 
 theorem rewriteTest7 : Πa b c,
  P (eq nat (add (add (add a b) c) (add a b))
-           (add (add (add c b) c) (add a b)))
+           (add (add (add c b) c) (add a b))) ≔
 begin
   assume a b c
   rewrite [in x in (add x c)] (silly_axiom a c)
@@ -253,7 +253,7 @@ end
 // Very trivial SSReflect example.
 theorem rewriteTest8 : Πa b c,
  P (eq nat (add (add (add a b) c) (add a b))
-           (add (add (add c b) c) (add a b)))
+           (add (add (add c b) c) (add a b))) ≔
 begin
   assume a b c
   rewrite [in (add (_) c)] (silly_axiom a c)
@@ -262,7 +262,7 @@ end
 
 theorem rewriteTest9 : Πa b c,
   P (eq nat (add (add a b) (add c (add a b)))
-            (add (add a b) (add c (add b a))))
+            (add (add a b) (add c (add b a)))) ≔
 begin
   assume a b c
   rewrite [(add a  _) in x in (add c x)] addcomm
@@ -271,7 +271,7 @@ end
 
 theorem rewriteTest10 : Πa b c,
   P (eq nat (add (add c (add a b)) (add (add a b) (add c (add a b))))
-            (add (add c (add b a)) (add (add a b) (add c (add b a)))))
+            (add (add c (add b a)) (add (add a b) (add c (add b a))))) ≔
 begin
   assume a b c
   rewrite [(add a _) in x in (add c x)] addcomm
@@ -280,7 +280,7 @@ end
 
 theorem rewriteTest11 : Πa b c,
   P (eq nat (add (add (add (add a b) c) (add (add a b) c)) (add (add a b) c))
-            (add (add (add (add a b) c) (add (add b a) c)) (add (add a b) c)))
+            (add (add (add (add a b) c) (add (add b a) c)) (add (add a b) c))) ≔
 begin
   assume a b c
   rewrite [(add a _) in x in (add (add _ x) _)] addcomm
@@ -290,7 +290,7 @@ end
 
 theorem rewriteTest12 : Πa b c,
   P (eq nat (add (add c (add a b)) (add (add a b) (add c (add a b))))
-            (add (add c (add b a)) (add (add a b) (add c (add b a)))))
+            (add (add c (add b a)) (add (add a b) (add c (add b a))))) ≔
 begin
   assume a b c
   rewrite [(add a b) as x in (add _ x)] addcomm

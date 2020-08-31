@@ -42,6 +42,8 @@ let pp_modifier : p_modifier loc pp = fun oc {elt; _} ->
   | P_prop(Defin) -> ()
   | P_prop(Const) -> Format.pp_print_string oc "constant "
   | P_prop(Injec) -> Format.pp_print_string oc "injective "
+  | P_opaq(Nonopaque) -> ()
+  | P_opaq(Opaque) -> Format.pp_print_string oc "opaque"
 
 let rec pp_p_term : p_term pp = fun oc t ->
   let open Parser in (* for PAtom, PAppl and PFunc *)
@@ -220,17 +222,19 @@ let pp_command : p_command pp = fun oc cmd ->
       out "require %a as %a" (pp_path cmd.pos) p (pp_path_elt i.pos) i.elt
   | P_open(ps)                      ->
       List.iter (out "open %a" (pp_path cmd.pos)) ps
-  | P_symbol(ms,op,st,t,ts_pe) ->
-    let is_defin {elt; _} =
-      match elt with
-      | P_prop(Defin) -> true
-      | _ -> false
-    in
+  | P_symbol(ms,st,t,ts_pe,_e) (* TODO *) ->
     begin
-      match List.exists is_defin ms with
-      | true ->
+      match (t,ts_pe) with
+      | (Some _,_) | (_,Some _) ->
         let s,args,ao = st.elt in
-        let def_or_theo = if op then "theorem" else "definition" in
+        let is_opaq {elt; _} =
+          match elt with
+          | P_opaq(Nonopaque) -> true
+          | _ -> false
+        in
+        let def_or_theo =
+          if List.exists is_opaq ms then "theorem" else "definition"
+        in
         out "@[<hov 2>%a%s %a"
           (Format.pp_print_list pp_modifier) ms def_or_theo pp_ident s;
         List.iter (out " %a" pp_p_arg) args;
@@ -244,7 +248,7 @@ let pp_command : p_command pp = fun oc cmd ->
             out "%a" pp_p_proof_end pe.elt
           | None -> ()
         end
-      | false ->
+      | (None,None) ->
         let (s,args,a) = st.elt in
         let a =
           match a with

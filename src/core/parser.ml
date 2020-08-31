@@ -180,6 +180,7 @@ let _in_         = KW.create "in"
 let _injective_  = KW.create "injective"
 let _intro_      = KW.create "assume"
 let _let_        = KW.create "let"
+let _opaque_     = KW.create "opaque"
 let _open_       = KW.create "open"
 let _print_      = KW.create "print"
 let _private_    = KW.create "private"
@@ -309,10 +310,6 @@ let escaped_ident : bool -> string Earley.grammar = fun with_delim ->
 let escaped_ident_no_delim = escaped_ident false
 let escaped_ident = escaped_ident true
 
-(** Add the "definable" modifier by default. *)
-let add_defin : pos -> p_modifier loc list -> p_modifier loc list =
-     fun loc ms -> Pos.in_pos loc (P_prop(Defin)) :: ms
-
 (** Any identifier (regular or escaped). *)
 let parser any_ident =
   | id:regular_ident -> KW.check id; id
@@ -351,6 +348,7 @@ let parser qident = mp:{path_elem "."}* id:any_ident -> in_pos _loc (mp,id)
 let parser modifier =
   | _constant_ -> in_pos _loc (P_prop(Terms.Const))
   | _injective_ -> in_pos _loc (P_prop(Terms.Injec))
+  | _opaque_ -> in_pos _loc (P_opaq(Terms.Opaque))
   | _protected_ -> in_pos _loc (P_expo(Terms.Protec))
   | _private_ -> in_pos _loc (P_expo(Terms.Privat))
   | _sequential_ -> in_pos _loc (P_mstrat(Terms.Sequen))
@@ -608,10 +606,6 @@ let parser config =
   | "quantifier" qid:qident ->
       P_config_quant(qid)
 
-let parser statement =
-  s:ident al:arg* a:{":" term}? ->
-  Pos.in_pos _loc (s,al,a)
-
 let parser proof =
   _begin_ ts:tactic* e:proof_end -> (ts, Pos.in_pos _loc_e e)
 
@@ -650,6 +644,11 @@ let do_require : Pos.pos -> p_module_path -> unit = fun loc path ->
   | e                             -> local_fatal "Uncaught exception: [%s]"
                                        (Printexc.to_string e)
 
+let parser symbol =
+  | _symbol_ -> [Pos.in_pos _loc (P_opaq(Nonopaque))]
+  | _definition_ -> [Pos.in_pos _loc (P_opaq(Nonopaque))]
+  | _theorem_ -> [Pos.in_pos _loc (P_opaq(Opaque))]
+
 (** [cmd] is a parser for a single command. *)
 let parser cmd =
   | _require_ o:{_open_ -> true}?[false] ps:path+
@@ -661,20 +660,17 @@ let parser cmd =
   | _open_ ps:path+
       -> List.iter (get_ops _loc) ps;
          P_open(ps)
-  | mods:modifier* _symbol_ s:ident al:arg* ":" a:term
-      ts_pe:proof?
+  | ms:modifier* _symbol_ s:ident al:arg* ":" a:term
+         ts_pe:proof?
       -> let st = Pos.in_pos _loc (s,al,Some(a)) in
-         P_symbol(mods, false, st, None, ts_pe)
+         P_symbol(ms,st,None,ts_pe,Tac)
+  | ms:modifier* m:symbol s:ident al:arg* a:{":" term}? "≔" t:term?
+         ts_pe:proof?
+      -> let st = Pos.in_pos _loc (s,al,a) in
+         let ms = m @ ms in
+         P_symbol(ms,st,t,ts_pe,Def)
   | _rule_ r:rule rs:{_:_with_ rule}*
       -> P_rules(r::rs)
-  | ms:modifier* _definition_ st:statement t:{"≔" term}?
-        ts_pe:proof?
-      -> let ms = add_defin _loc ms in
-      P_symbol(ms,false,st,t,ts_pe)
-  | ms:modifier* _theorem_    st:statement t:{"≔" term}?
-        ts_pe:proof?
-      -> let ms = add_defin _loc ms in
-      P_symbol(ms,true ,st,t,ts_pe)
   | _set_ c:config
       -> P_set(c)
   | q:query

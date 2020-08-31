@@ -42,6 +42,7 @@ syntax keyword KeywordOK contained focus
 syntax keyword KeywordOK contained in
 syntax keyword KeywordOK contained injective
 syntax keyword KeywordOK contained let
+syntax keyword KeywordOK contained opaque
 syntax keyword KeywordOK contained open
 syntax keyword KeywordOK contained print
 syntax keyword KeywordOK contained private
@@ -81,6 +82,7 @@ syntax keyword KeywordKO contained focus
 syntax keyword KeywordKO contained in
 syntax keyword KeywordKO contained injective
 syntax keyword KeywordKO contained let
+syntax keyword KeywordKO contained opaque
 syntax keyword KeywordKO contained open
 syntax keyword KeywordKO contained print
 syntax keyword KeywordKO contained private

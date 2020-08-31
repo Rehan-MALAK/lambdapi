@@ -87,7 +87,7 @@ symbol imp_intro        : Π (p : Prop) (q : Prop), (P p → P q) → P (imp p q
 symbol imp_elim         : Π (p : Prop) (q : Prop), P (imp p q) → P p → P q
 
 
-theorem not_elimp : Π (A : Prop), P (not (not A)) → P A
+theorem not_elimp : Π (A : Prop), P (not (not A)) → P A ≔
 begin
     assume A nnp
     refine or_elim A (not A) A _ _ _

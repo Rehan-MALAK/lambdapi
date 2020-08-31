@@ -88,7 +88,7 @@ let handle_tactic :
     (* Check that [t] is well-typed. *)
     log_tact "proving %a" pp_typing (Env.to_ctxt env, t, a);
     let to_solve = Infer.check (Env.to_ctxt env) t a in
-    let to_solve =
+    let to_solve = (* TODO this should be removed *)
       try
         Unif.solve {Unif.empty_problem with to_solve}
       with Unif.Unsolvable -> to_solve

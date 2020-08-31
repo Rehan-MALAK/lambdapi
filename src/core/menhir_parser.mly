@@ -206,9 +206,6 @@ let build_config : Pos.pos -> string -> string option -> eval_config =
     | (_     , _          ) -> raise Exit (* captured below *)
   with _ -> parser_fatal loc "Invalid command configuration."
 
-(** Add the "definable" modifier by default. *)
-let add_defin : p_modifier loc list -> p_modifier loc list =
-     fun ms -> make_pos Lexing.(dummy_pos, dummy_pos) (P_prop(Defin)) :: ms
 %}
 
 %token EOF
@@ -255,57 +252,50 @@ line:
         | None -> make_pos Lexing.(dummy_pos, dummy_pos) (P_prop(Const)) :: ms
       in
       let st = make_pos $loc(s) (make_pos $loc(s) s, ps, Some(a)) in
-      let t =
-        P_symbol(ms, false, st, None, None)
+      let t = P_symbol(ms, st, None, None, Tac)
       in
       make_pos $loc t
     }
   | ms=modifier* KW_DEF s=ID COLON a=term DOT
     {
       let st = make_pos $loc(s) (make_pos $loc(s) s, [], Some(a)) in
-      let t = P_symbol (ms, false, st, None, None) in
+      let t = P_symbol (ms, st, None, None, Tac) in
       make_pos $loc t
     }
   | ms=modifier* KW_DEF s=ID COLON a=term DEFEQ t=term DOT
     {
       let st = make_pos $loc (make_pos $loc s,[],Some(a)) in
-      let ms = add_defin ms in
-      let t = P_symbol(ms, false, st, Some(t), None) in
+      let t = P_symbol(ms, st, Some(t), None, Def) in
       make_pos $loc t
     }
   | ms=modifier* KW_DEF s=ID DEFEQ t=term DOT
     {
       let st = make_pos $loc (make_pos $loc s,[],None) in
-      let ms = add_defin ms in
-      let t = P_symbol (ms, false, st, Some(t), None) in
+      let t = P_symbol (ms, st, Some(t), None, Def) in
       make_pos $loc t
     }
   | ms=modifier* KW_DEF s=ID ps=param+ COLON a=term DEFEQ t=term DOT
     {
       let st = make_pos $loc (make_pos $loc s,ps,Some(a)) in
-      let ms = add_defin ms in
-      let t = P_symbol (ms, false, st, Some(t), None) in
+      let t = P_symbol (ms, st, Some(t), None, Def) in
       make_pos $loc t
     }
   | ms=modifier* KW_DEF s=ID ps=param+ DEFEQ t=term DOT
     {
       let st = make_pos $loc (make_pos $loc s,ps,None) in
-      let ms = add_defin ms in
-      let t = P_symbol (ms, false, st, Some(t), None) in
+      let t = P_symbol (ms, st, Some(t), None, Def) in
       make_pos $loc t
     }
   | ms=modifier* KW_THM s=ID COLON a=term DEFEQ t=term DOT
     {
       let st = make_pos $loc (make_pos $loc s,[],Some(a)) in
-      let ms = add_defin ms in
-      let t = P_symbol (ms, true , st, Some(t), None) in
+      let t = P_symbol (ms, st, Some(t), None, Def) in
       make_pos $loc t
     }
   | ms=modifier* KW_THM s=ID ps=param+ COLON a=term DEFEQ t=term DOT
     {
       let st = make_pos $loc (make_pos $loc s,ps,Some(a)) in
-      let ms = add_defin ms in
-      let t = P_symbol (ms, true , st, Some(t), None) in
+      let t = P_symbol (ms, st, Some(t), None, Def) in
       make_pos $loc t
     }
   | rs=rule+ DOT {

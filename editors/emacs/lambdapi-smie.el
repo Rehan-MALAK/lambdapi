@@ -11,7 +11,6 @@
   '("apply"
     "assume"
     "fail"
-    "solve"
     "focus"
     "print"
     "proofterm"
@@ -19,6 +18,7 @@
     "reflexivity"
     "rewrite"
     "simpl"
+    "solve"
     "symmetry"
     "why3"))
 (defconst lambdapi--queries '("set" "assert" "assertnot" "type" "compute")
@@ -70,7 +70,6 @@ Indent by `lambdapi-indent-basic' in proofs, and 0 otherwise."
       (tactic ("apply" sterm)
               ("assume" sterm)
               ("fail")
-              ("solve")
               ("focus" ident)
               ("print")
               ("proofterm")
@@ -78,6 +77,7 @@ Indent by `lambdapi-indent-basic' in proofs, and 0 otherwise."
               ("reflexivity")
               ("rewrite" "[" rw-patt "]")
               ("simpl")
+              ("solve")
               ("why3"))
       (query ("assert" sterm ":" sterm)
              ("assert" sterm "≡" sterm)
@@ -101,6 +101,7 @@ Indent by `lambdapi-indent-basic' in proofs, and 0 otherwise."
                ("injective" symdec)
                ("open" ident)
                ("private" symdec)
+               ("opaque" symdec)
                ("begin" prfcontent "abort")
                ("begin" prfcontent "admit")
                ("begin" prfcontent "end")
@@ -149,7 +150,6 @@ The default lexer is used because the syntax is primarily made of sexps."
     (`(:before . "focus") `(column . ,lambdapi-indent-basic))
     (`(:before . "print") `(column . ,lambdapi-indent-basic))
     (`(:before . "fail") `(column . ,lambdapi-indent-basic))
-    (`(:before . "solve") `(column . ,lambdapi-indent-basic))
 
     (`(:before . ,(or "admit" "abort" "end")) '(column . 0))
     (`(:after . ,(or "admit" "abort" "end")) '(column . 0))
@@ -168,7 +168,7 @@ The default lexer is used because the syntax is primarily made of sexps."
     (`(:after . "in") (smie-rule-parent))
     (`(:after . ,(or "symbol" "definition" "theorem")) lambdapi-indent-basic)
     (`(:after . ,(or "simpl" "rewrite" "assume" "apply" "refine"
-                     "why3" "reflexivity" "focus" "print" "fail" "solve"))
+                     "why3" "reflexivity" "focus" "print" "fail"))
      lambdapi-indent-basic)
 
     ;; Toplevel

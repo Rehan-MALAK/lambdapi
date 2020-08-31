@@ -207,6 +207,11 @@ type p_modifier =
   | P_mstrat of Terms.match_strat
   | P_expo of Terms.expo
   | P_prop of Terms.prop
+  | P_opaq of Terms.opacity
+
+type proof_meaning =
+  | Tac
+  | Def
 
 type p_command_aux =
   | P_require    of bool * p_module_path list
@@ -215,9 +220,8 @@ type p_command_aux =
   (** Require as statement. *)
   | P_open       of p_module_path list
   (** Open statement. *)
-  | P_symbol     of p_modifier loc list * bool * p_statement
-                   * p_term option
-                   * (p_tactic list * p_proof_end loc) option
+  | P_symbol     of p_modifier loc list * p_statement * p_term option
+                   * (p_tactic list * p_proof_end loc) option * proof_meaning
   (** Symbol declaration. *)
   | P_rules      of p_rule list
   (** Rewriting rule declarations. *)
@@ -358,16 +362,17 @@ let eq_p_command : p_command eq = fun c1 c2 ->
      List.equal (=) ps1 ps2
   | (P_require_as(p1,id1)  , P_require_as(p2,id2)              ) ->
      p1 = p2 && id1.elt = id2.elt
-  | (P_symbol(ms1,b1,st1,t1,ts_pe1),
-     P_symbol(ms2,b2,st2,t2,ts_pe2))                         ->
+  | (P_symbol(ms1,st1,t1,ts_pe1,m1),
+     P_symbol(ms2,st2,t2,ts_pe2,m2))                         ->
       let s1,l1,a1 = st1.elt in
       let s2,l2,a2 = st2.elt in
       let eq_tactic =
         fun (ts1,_) (ts2,_) -> (List.equal eq_p_tactic) ts1 ts2
       in
-      ms1 = ms2 && b1 = b2 && eq_ident s1 s2 && List.equal eq_p_arg l1 l2
+      ms1 = ms2 && eq_ident s1 s2 && List.equal eq_p_arg l1 l2
       && Option.equal eq_p_term a1 a2 && Option.equal eq_p_term t1 t2
       && Option.equal eq_tactic ts_pe1 ts_pe2
+      && m1 = m2
   | (P_rules(rs1)                , P_rules(rs2)                ) ->
       List.equal eq_p_rule rs1 rs2
   | (P_set(c1)                   , P_set(c2)                   ) ->

@@ -66,7 +66,7 @@
     },
 
     "keywords": {
-      "match": "\\b(TYPE|left|right|infix|prefix|quantifier|protected|private|injective|constant)\\b",
+      "match": "\\b(TYPE|left|right|infix|prefix|quantifier|protected|private|injective|constant|opaque)\\b",
       "name": "storage.modifier.lp"
     }    
   }
