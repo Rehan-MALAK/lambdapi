@@ -275,11 +275,11 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
       (* Proof script *)
       let (ts,pe) =
         let p_end = Pos.make cmd.pos P_proof_end in
-        let solve = Pos.make cmd.pos P_unif_solve in
+        let _solve = Pos.make cmd.pos P_unif_solve in
         begin
           match p_t,ts_pe with
           | Some p_t,None ->
-            solve::[Pos.make cmd.pos (P_tac_refine(p_t))], p_end
+            [Pos.make cmd.pos (P_tac_refine(p_t))], p_end
           | Some p_t,Some(ts,pe) ->
             Pos.make cmd.pos (P_tac_refine(p_t))::ts, pe
           | None,Some(ts,pe) -> ts,pe

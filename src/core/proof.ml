@@ -139,13 +139,11 @@ let goals_of_typ : Pos.popt -> term option -> term option ->
       end
     | None,None    -> assert false (* already rejected by parser *)
   in
-(*
   let to_solve = (* TODO this shoud be removed *)
     try
       Unif.solve {Unif.empty_problem with to_solve}
     with Unif.Unsolvable -> to_solve
   in
-*)
   (* aggregate constr list of type of argument *)
 (*
   let constr_sort = ([],Type,sort) in
