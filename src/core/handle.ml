@@ -272,62 +272,63 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
       (* If a type [ao = Some a] is given, then we check that it is
          typable by a sort and that [t] has type [a]. Otherwise, we
              try to infer thetype of [t]. Unification goals are collected *)
-          (* Proof script *)
-          let (ts,pe) =
-            let (ts,pe) =
-              match ts_pe with
-              | None -> ([], Pos.make cmd.pos P_proof_end)
-              | Some(ts,pe) -> (ts,pe)
-            in
-            match p_t with
-            | Some p_t ->
-              let refine = Pos.make cmd.pos (P_tac_refine(p_t)) in
-              (refine::ts, pe)
-            | None -> (ts,pe)
-          in
-          let goals,sig_symbol,pdata_expo =
-              let sort_goals, a = Proof.goals_of_typ x.pos ao t in
-              (* And the main "type" goal *)
-              let typ_goal =
-                match e with
-                | Def ->
-                  let proof_term = fresh_meta ~name:x.elt a 0 in
-                  let typ_goal = Proof.goals_of_meta proof_term in
-                  typ_goal
-                | Tac ->
-                  []
-              in
-              let goals = sort_goals @ typ_goal in
-              let sig_symbol = {expo;prop;mstrat;ident=x;typ=a;impl;def=t} in
-              (* Depending on opacity : theorem = false / definition = true *)
-              let pdata_expo =
-                match e, op,ao,prop,mstrat with
-                (* Theorem *)
-                |   Tac,     _,      _ ,    _ ,     _  -> expo
-                |     _, true ,      _ , Defin, Eager  -> Privat
-                |     _, true ,      _ , _    , Eager  ->
-                  fatal cmd.pos "Property modifiers can't be used in \
-                                 theorems."
-                |     _, true ,      _ , _    , _      ->
-                  fatal cmd.pos "Pattern matching strategy modifiers cannot \
-                                 be used in theorems."
+      (* Proof script *)
+      let (ts,pe) =
+        let p_end = Pos.make cmd.pos P_proof_end in
+        let solve = Pos.make cmd.pos P_unif_solve in
+        begin
+          match p_t,ts_pe with
+          | Some p_t,None ->
+            solve::[Pos.make cmd.pos (P_tac_refine(p_t))], p_end
+          | Some p_t,Some(ts,pe) ->
+            Pos.make cmd.pos (P_tac_refine(p_t))::ts, pe
+          | None,Some(ts,pe) -> ts,pe
+          | None,None -> [],p_end
+        end
+      in
+      let goals,sig_symbol,pdata_expo =
+        let sort_goals, a = Proof.goals_of_typ x.pos ao t in
+        (* And the main "type" goal *)
+        let typ_goal =
+          match e with
+          | Def ->
+            let proof_term = fresh_meta ~name:x.elt a 0 in
+            let typ_goal = Proof.goals_of_meta proof_term in
+            typ_goal
+          | Tac ->
+            []
+        in
+        let goals = sort_goals @ typ_goal in
+        let sig_symbol = {expo;prop;mstrat;ident=x;typ=a;impl;def=t} in
+        (* Depending on opacity : theorem = false / definition = true *)
+        let pdata_expo =
+          match e, op,ao,prop,mstrat with
+          (* Theorem *)
+          |   Tac,     _,      _ ,    _ ,     _  -> expo
+          |     _, true ,      _ , Defin, Eager  -> Privat
+          |     _, true ,      _ , _    , Eager  ->
+            fatal cmd.pos "Property modifiers can't be used in \
+                           theorems."
+          |     _, true ,      _ , _    , _      ->
+            fatal cmd.pos "Pattern matching strategy modifiers cannot \
+                           be used in theorems."
 (*
                 |     _, true , None   , _    , _      ->
                   fatal cmd.pos "Theorem should have an explicit type !"
 *)
-                (* Definition *)
+          (* Definition *)
 (*
                 |     _, false, _      , Const, _      ->
                   fatal cmd.pos "A definition cannot be a constant."
 *)
-                |     _, false, _      , _    , Sequen ->
-                  fatal cmd.pos "Pattern matching strategy modifiers cannot \
-                                 be used in definitions."
-                |     _, false, _      , _    , _      -> expo
-              in
-              goals,sig_symbol,pdata_expo
-          in
-          data_proof sig_symbol cmd pdata_expo ts pe goals
+          |     _, false, _      , _    , Sequen ->
+            fatal cmd.pos "Pattern matching strategy modifiers cannot \
+                           be used in definitions."
+          |     _, false, _      , _    , _      -> expo
+        in
+        goals,sig_symbol,pdata_expo
+      in
+      data_proof sig_symbol cmd pdata_expo ts pe goals
     in
     (ss, Some(data))
   | P_rules(rs)                ->
