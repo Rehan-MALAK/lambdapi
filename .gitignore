@@ -20,3 +20,16 @@ libraries/zenon_modulo
 *.png
 .DS_Store
 *.map
+sbbasics
+sbctxt
+sbenv
+sbhandle
+sbinfer
+sbproof
+sbscope
+sbsig_state
+sbsign
+sbsr
+sbtactics
+sbtyping
+sbunif

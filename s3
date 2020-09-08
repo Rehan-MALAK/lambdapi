@@ -1,0 +1,11 @@
+remove_printer Core__Mydebugocd.print_pos
+remove_printer Core__Mydebugocd.print_bindlib_var
+remove_printer Core__Mydebugocd.print_bindlib_binder
+remove_printer Core__Mydebugocd.print_bindlib_mbinder
+remove_printer Core__Mydebugocd.print_term
+remove_printer Core__Mydebugocd.print_sym
+remove_printer Core__Mydebugocd.print_meta
+remove_printer Core__Mydebugocd.print_terms_env
+remove_printer Core__Mydebugocd.print_rule
+remove_printer Core__Mydebugocd.print_term_pos
+remove_printer Core__Mydebugocd.print_rule_pos

@@ -4,11 +4,15 @@ EMACS  = $(shell which emacs)
 #### Compilation (binary, library and documentation) #########################
 
 .PHONY: all
-all: bin
+all: me
+
+.PHONY: me
+me:
+	@dune build --display verbose src/cli/lambdapi.bc
 
 .PHONY: bin
 bin:
-	@dune build
+	@dune build --display verbose
 
 .PHONY: doc
 doc:
