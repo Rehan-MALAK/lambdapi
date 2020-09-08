@@ -139,16 +139,12 @@ let goals_of_typ : Pos.popt -> term option -> term option ->
       end
     | None,None    -> assert false (* already rejected by parser *)
   in
+(*
   let to_solve = (* TODO this shoud be removed *)
     try
       Unif.solve {Unif.empty_problem with to_solve}
     with Unif.Unsolvable -> to_solve
   in
-  (* aggregate constr list of type of argument *)
-(*
-  let constr_sort = ([],Type,sort) in
-  let goal_sort = [goal_unif constr_sort] in
-  (List.map goal_unif to_solve @ goal_sort), typ
 *)
   let _sort = sort in
   (List.map (fun x -> Goal.Unif x) to_solve), typ
@@ -180,7 +176,7 @@ let pp_goals : proof_state pp = fun oc ps ->
           List.iter print_hyp (List.rev hyps);
           Format.fprintf oc "   --------------------------------------\n"
         end;
-      Format.fprintf oc "0. %a\n" pp_term a;
+      Format.fprintf oc "Typ  0. %a\n" pp_term a;
       if gs <> [] then
         begin
           Format.fprintf oc "\n";
@@ -188,12 +184,13 @@ let pp_goals : proof_state pp = fun oc ps ->
             match g with
             | Goal.Typ g ->
               let (_, a) = Goal.get_type g in
-              Format.fprintf oc "%i. %a\n" (i+1) pp_term a
-            | Goal.Unif cs -> Format.fprintf oc "Unif? %a\n" pp_constr cs
+              Format.fprintf oc "Typ  %i. %a\n" (i+1) pp_term a
+            | Goal.Unif cs ->
+              Format.fprintf oc "Unif %i. %a\n" (i+1) pp_constr cs
           in
           List.iteri print_goal gs
         end
-    | Goal.Unif cs -> Format.fprintf oc "Unif? %a\n" pp_constr cs;
+    | Goal.Unif cs -> Format.fprintf oc "Unif 0. %a\n" pp_constr cs;
       if gs <> [] then
         begin
           Format.fprintf oc "\n";
@@ -201,8 +198,9 @@ let pp_goals : proof_state pp = fun oc ps ->
             match g with
             | Goal.Typ g ->
               let (_, a) = Goal.get_type g in
-              Format.fprintf oc "%i. %a\n" (i+1) pp_term a
-            | Goal.Unif cs -> Format.fprintf oc "Unif? %a\n" pp_constr cs
+              Format.fprintf oc "Typ  %i. %a\n" (i+1) pp_term a
+            | Goal.Unif cs ->
+              Format.fprintf oc "Unif %i. %a\n" (i+1) pp_constr cs
           in
           List.iteri print_goal gs
         end
