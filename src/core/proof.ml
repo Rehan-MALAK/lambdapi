@@ -91,10 +91,17 @@ type proof_state =
 (** Short synonym for qualified use. *)
 type t = proof_state
 
-(** [goals_of_meta m] returns a goal associated to the meta m *)
-let goals_of_meta : meta -> Goal.t list = fun m ->
-  let goal_typ = Goal.Typ (Goal.goal_typ_of_meta m) in
-  [goal_typ]
+(** [goal_of_meta m] returns a goal associated to the meta m *)
+let goal_of_meta : meta -> Goal.t = fun m ->
+  Goal.Typ (Goal.goal_typ_of_meta m)
+
+(** [goals_of_metas m] returns the goals associated to the metas in a *)
+let goals_of_metas : term -> Goal.t list = fun a ->
+  let goals = ref [] in
+  let add_goal g = goals :=  g::!goals in
+  let add_goal_of_meta m = add_goal (goal_of_meta m) in
+  Basics.iter_meta true add_goal_of_meta a;
+  !goals
 
 (** [goals_of_typ typ ter] returns a list of goals corresponding to the
     typability of [typ] by a sort and checking eventually that term

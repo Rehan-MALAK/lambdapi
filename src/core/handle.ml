@@ -288,17 +288,20 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
       in
       let goals,sig_symbol,pdata_expo =
         let sort_goals, a = Proof.goals_of_typ x.pos ao t in
+(*         let goals_of_metas = Proof.goals_of_metas a in *)
+        let goals_of_metas = [] in
         (* And the main "type" goal *)
         let typ_goal =
           match e with
           | Def ->
             let proof_term = fresh_meta ~name:x.elt a 0 in
-            let typ_goal = Proof.goals_of_meta proof_term in
-            typ_goal
+            let proof_goal = Proof.goal_of_meta proof_term in
+            goals_of_metas @ [proof_goal]
           | Tac ->
-            []
+            goals_of_metas
         in
         let goals = sort_goals @ typ_goal in
+        wrn x.pos "DEBUG\n%a" (Mydebug.print_list Mydebug.comma Mydebug.print_goal) goals;
         let sig_symbol = {expo;prop;mstrat;ident=x;typ=a;impl;def=t} in
         (* Depending on opacity : theorem = false / definition = true *)
         let pdata_expo =
