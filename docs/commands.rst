@@ -66,7 +66,18 @@ with some modifier or an exposition marker. In the following example,
 The command requires a fresh symbol name (it should not have already
 been used in the current module) and a type for the symbol.
 
-It is possible to put arguments on the left side of the ``:`` symbol
+To give a term (closed) definition, we use the ``≔`` symbol.
+
+::
+
+   symbol plus_two : Nat → Nat ≔ λn,add n (succ (succ zero))
+   symbol plus_two (n : Nat) : Nat ≔ add n (succ (succ zero))
+   symbol plus_two (n : Nat) ≔ add n (succ (succ zero))
+   symbol plus_two n ≔ add n (succ (succ zero))
+   protected symbol plus_two n ≔ add n (succ (succ zero))
+
+It is possible to put arguments on the left side of the ``:``
+or ``≔`` symbols
 (similarly to a value declaration in OCaml).
 
 Data types and predicates must be given types of the form
@@ -76,6 +87,9 @@ Data types and predicates must be given types of the form
 ``U``.
 
 We recommend to start types and predicates by a capital letter.
+
+The ``begin...end`` commands make the user enter an interactive mode.
+The documentation is in `tactic <tactics.rst>`.
 
 **Modifiers:** - Modifiers for the unification engine, - ``constant``:
 no rule can be added to the symbol - ``injective``: the symbol can be
@@ -217,43 +231,6 @@ Adding sets of rules allows to maintain confluence.
 
 Examples of patterns are available in the file
 ```patterns.lp`` <../tests/OK/patterns.lp>`__ of the test suite.
-
-``definition``
---------------
-
-The ``definition`` command is used to immediately define a new symbol,
-for it to be equal to some (closed) term. Definitions can use exposition
-markers the same way the ``symbol`` command use them.
-
-::
-
-   definition plus_two : Nat → Nat ≔ λn,add n (succ (succ zero))
-   definition plus_two (n : Nat) : Nat ≔ add n (succ (succ zero))
-   definition plus_two (n : Nat) ≔ add n (succ (succ zero))
-   definition plus_two n ≔ add n (succ (succ zero))
-   protected definition plus_two n ≔ add n (succ (succ zero))
-
-Note that some type annotations can be omitted, and that it is possible
-to put arguments on the left side of the ``≔`` symbol (similarly to a
-value declaration in OCaml). Some arguments can be declared as implicit
-by enclosing them in curly brackets.
-
-``theorem``
------------
-
-The ``theorem`` command makes the user enter a new interactive mode. The
-user has to provide a term of some given type. Such a goal is
-materialized by a metavariable of the given type (goals and
-metavariables are synonyms). One can then partially instantiate a goal
-metavariable by using commands specific to this mode called tactics. A
-tactic may generate new goals/metavariables. The proof of the theorem is
-complete only when all generated goals have been solved.
-
-A proof must start by the keyword ``begin`` followed by a sequence of
-`tactics <tactics.rst>`__, and must end by the keywords ``end`` (when the
-proof is complete), ``admit`` (when one wants to admit the theorem
-without proving it) or ``abort`` (when one wants to end the proof
-without adding the theorem in the environment).
 
 ``type``
 --------

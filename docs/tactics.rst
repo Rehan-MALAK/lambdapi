@@ -1,13 +1,14 @@
 Syntax of proof tactics
 =======================
 
-The ``theorem`` command makes the user enter an interactive mode. The
-user has to provide a term of some given type. Such a goal is
-materialized by a metavariable of the given type (goals and
-metavariables are synonyms). One can then partially instantiate a goal
+The ``begin...end`` commands make the user enter an interactive mode. The
+user has to provide a term of some given type. Such a type goal is
+materialized by a metavariable of the given type (type goals and
+metavariables are synonyms). One can then partially instantiate a type goal
 metavariable by using commands specific to this proof mode called
-tactics. A tactic may generate new goals/metavariables. The proof of the
-theorem is complete only when all generated goals have been solved.
+tactics. A tactic may generate new type goals/metavariables and also
+unification goals. The proof of the theorem is complete only when all
+generated goals have been solved.
 
 Reminder: the BNF grammar of Lambdapi is in :download:`syntax.bnf`.
 
@@ -164,6 +165,11 @@ that is, of the form ``l`` with ``x1`` replaced by ``u1``, …, ``xn``
 replaced by ``un``, then the tactic ``rewrite t`` replaces in the
 focused goal all occurrences of ``u`` by the term ``r`` with ``x1``
 replaced by ``u1``, …, ``xn`` replaced by ``un``.
+
+``solve``
+---------
+
+The ``solve`` tactic calls the default unification algorithm.
 
 ``fail``
 --------
