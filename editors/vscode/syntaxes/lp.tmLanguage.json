@@ -40,7 +40,7 @@
     },
 
     "signature-commands": {
-      "match": "(definition|as|in|let|declared|builtin|begin|end|rule|symbol|theorem|with)\\s+([^\\s+]*)",
+      "match": "(as|in|let|declared|builtin|begin|end|rule|symbol|with)\\s+([^\\s+]*)",
       "captures": {
         "1": {"name": "storage.type.lp"},
         "2": {"name": "entity.name.function.theorem.lp"}

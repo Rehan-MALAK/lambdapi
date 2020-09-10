@@ -36,7 +36,6 @@ syntax keyword KeywordOK contained assume
 syntax keyword KeywordOK contained begin
 syntax keyword KeywordOK contained compute
 syntax keyword KeywordOK contained constant
-syntax keyword KeywordOK contained definition
 syntax keyword KeywordOK contained end
 syntax keyword KeywordOK contained focus
 syntax keyword KeywordOK contained in
@@ -57,7 +56,6 @@ syntax keyword KeywordOK contained set
 syntax keyword KeywordOK contained simpl
 syntax keyword KeywordOK contained symmetry
 syntax keyword KeywordOK contained symbol
-syntax keyword KeywordOK contained theorem
 syntax keyword KeywordOK contained type
 syntax keyword KeywordOK contained TYPE
 syntax keyword KeywordOK contained why3
@@ -76,7 +74,6 @@ syntax keyword KeywordKO contained assume
 syntax keyword KeywordKO contained begin
 syntax keyword KeywordKO contained compute
 syntax keyword KeywordKO contained constant
-syntax keyword KeywordKO contained definition
 syntax keyword KeywordKO contained end
 syntax keyword KeywordKO contained focus
 syntax keyword KeywordKO contained in
@@ -97,7 +94,6 @@ syntax keyword KeywordKO contained set
 syntax keyword KeywordKO contained simpl
 syntax keyword KeywordKO contained symmetry
 syntax keyword KeywordKO contained symbol
-syntax keyword KeywordKO contained theorem
 syntax keyword KeywordKO contained type
 syntax keyword KeywordKO contained TYPE
 syntax keyword KeywordKO contained why3

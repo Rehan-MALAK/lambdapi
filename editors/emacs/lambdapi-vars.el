@@ -21,8 +21,7 @@
   "Proof tactics.")
 
 (defconst lambdapi-sig-commands
-  '("definition"
-    "as"
+  '("as"
     "in"
     "let"
     "declared"
@@ -33,7 +32,6 @@
     "require"
     "rule"
     "symbol"
-    "theorem"
     "with")
   "Commands that enrich the signature.")
 

@@ -24,7 +24,7 @@
 (defconst lambdapi--queries '("set" "assert" "assertnot" "type" "compute")
   "Commands that can appear in proofs.")
 (defconst lambdapi--cmds
-  (append '("symbol" "theorem" "rule" "and" "definition" "begin" "require")
+  (append '("symbol" "rule" "and" "begin" "require")
           lambdapi--queries)
   "Commands at top level.")
 
@@ -97,7 +97,6 @@ Indent by `lambdapi-indent-basic' in proofs, and 0 otherwise."
                      (unif-rule-rhs ";" sterm "≡" sterm))
       (symdec ("symbol" args ":" sterm))
       (command ("constant" symdec)
-               ("definition" args "≔" sterm)
                ("injective" symdec)
                ("open" ident)
                ("private" symdec)
@@ -117,7 +116,6 @@ Indent by `lambdapi-indent-basic' in proofs, and 0 otherwise."
                ("set" "prefix" ident "≔" sterm)
                ("set" "quantifier" ident)
                ("set" "unif_rule" sterm "≡" sterm "↪" unif-rule-rhs)
-               ("theorem" args ":" sterm)
                ("with" sterm "↪" sterm)
                (symdec)))
     '((assoc "≡") (assoc ",") (assoc "in") (assoc "→")))))
@@ -166,7 +164,7 @@ The default lexer is used because the syntax is primarily made of sexps."
     (`(:after . "begin") lambdapi-indent-basic)
     (`(:after . ,(or "rule" "with")) (* 2 lambdapi-indent-basic))
     (`(:after . "in") (smie-rule-parent))
-    (`(:after . ,(or "symbol" "definition" "theorem")) lambdapi-indent-basic)
+    (`(:after . ,(or "symbol")) lambdapi-indent-basic)
     (`(:after . ,(or "simpl" "rewrite" "assume" "apply" "refine"
                      "why3" "reflexivity" "focus" "print" "fail"))
      lambdapi-indent-basic)
@@ -178,8 +176,6 @@ The default lexer is used because the syntax is primarily made of sexps."
     (`(:before . "constant") '(column . 0))
     (`(:before . "require") '(column . 0))
     (`(:before . "open") '(column . 0))
-    (`(:before . "definition") '(column . 0))
-    (`(:before . "theorem") '(column . 0))
     (`(:before . "begin") '(column . 0))
     (`(:before . "symbol") '(column . 0))
 
