@@ -9,7 +9,6 @@ reserved "assume"
 reserved "begin"
 reserved "compute"
 reserved "constant"
-reserved "definition"
 reserved "end"
 reserved "fail"
 reserved "focus"
@@ -31,7 +30,6 @@ reserved "set"
 reserved "simpl"
 reserved "symmetry"
 reserved "symbol"
-reserved "theorem"
 reserved "type"
 reserved "TYPE"
 reserved "with"
@@ -192,11 +190,6 @@ reserved "why3"
     {"begin" <tactic>* {"end"|"admit"|"abort"}}?
   // Define a new rewriting rule
   | "rule" <rule> {"and" <rule>}*
-  // Definition of a symbol or theorem
-  | <exposition>? "definition" <ident> <arg>* {":" <type>}? {"≔" <term>}?
-    {"begin" <tactic>* {"end"|"admit"|"abort"}}?
-  | <exposition>? "theorem" <ident> <arg>* {":" <type>}?  {"≔" <term>}?
-    {"begin" <tactic>* {"end"|"admit"|"abort"}}?
   // Assertion
   | "assert" arg* "⊢" <assertion>
   | "assertnot" arg* "⊢" <assertion>
