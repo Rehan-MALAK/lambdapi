@@ -3,7 +3,7 @@ require open tests.OK.bool
 require open tests.OK.nat
 
 // Symmetry of the equality (first option, rewrite).
-theorem eq_sym : Πa x y, P (eq a x y) → P (eq a y x) ≔
+opaque symbol eq_sym : Πa x y, P (eq a x y) → P (eq a y x) ≔
 begin
   assume a x y h
   rewrite h
@@ -11,14 +11,14 @@ begin
 end
 
 // Symmetry of the equality (second option, by hand).
-theorem eq_sym_other_1 : Πa x y, P (eq a x y) → P (eq a y x) ≔
+opaque symbol eq_sym_other_1 : Πa x y, P (eq a x y) → P (eq a y x) ≔
 begin
   assume a x y h
   refine eqind a x y h (λz, eq a y z) (refl a y)
 end
 
 // Symmetry of the equality (third option, by hand with a wildcard).
-theorem eq_sym_other_2 : Πa x y, P (eq a x y) → P (eq a y x) ≔
+opaque symbol eq_sym_other_2 : Πa x y, P (eq a x y) → P (eq a y x) ≔
 begin
   assume a x y h
   refine eqind a x y h (λz, eq a y z) _
@@ -27,14 +27,14 @@ begin
 end
 
 // [s] is compatible with Leibniz equality.
-theorem s_eq : Πx y, P (eq nat x y) → P (eq nat (s x) (s y)) ≔
+opaque symbol s_eq : Πx y, P (eq nat x y) → P (eq nat (s x) (s y)) ≔
 begin
   assume x y xy
   refine eqind nat x y xy (λz, eq nat (s z) (s y)) (refl nat (s y))
 end
 
 // [z] is right neutral for add.
-theorem add0r : Πn, P (eq nat (n + 0) n) ≔
+opaque symbol add0r : Πn, P (eq nat (n + 0) n) ≔
 begin
   // FIXME try to infer the predicate
   refine nat_ind (λn, eq _ (n + 0) n) ?CZ ?CS
@@ -48,7 +48,7 @@ begin
 end
 
 // [Π n m, n + S m = S (n+m)]
-theorem add_succ_r : Πn m, P (eq nat (n + (s m)) (s (n + m))) ≔
+opaque symbol add_succ_r : Πn m, P (eq nat (n + (s m)) (s (n + m))) ≔
 begin
   assume n m
   refine nat_ind (λn, eq nat (n + (s m)) (s (n + m))) ?case_0 ?case_s n
@@ -64,7 +64,7 @@ begin
 end
 
 // Commutativity of the addition.
-theorem addcomm : Πn m, P (eq nat (add n m) (add m n)) ≔
+opaque symbol addcomm : Πn m, P (eq nat (add n m) (add m n)) ≔
 begin
   assume n m
   // FIXME try to infer nat
@@ -80,7 +80,7 @@ begin
 end
 
 // Adding the same value is the same as multiplying by 2.
-theorem add_same_times_two : Πx, P (eq nat (x + x) (2 × x)) ≔
+opaque symbol add_same_times_two : Πx, P (eq nat (x + x) (2 × x)) ≔
 begin
   assume x
   simpl
@@ -92,7 +92,7 @@ end
 //////////////////////////////////////////////////////////////////////////////
 
 // This stupid test directly uses the addcomm lemma.
-theorem rewriteTest1 : Πa b, P (eq nat (a + b) (b + a)) ≔
+opaque symbol rewriteTest1 : Πa b, P (eq nat (a + b) (b + a)) ≔
 begin
   assume a b
   //print
@@ -101,7 +101,7 @@ begin
 end
 
 // This stupid test directly uses the addcomm lemma in one place.
-theorem rewriteTest2 : Πa b, P (eq nat (a + b + b) (b + a + b)) ≔
+opaque symbol rewriteTest2 : Πa b, P (eq nat (a + b + b) (b + a + b)) ≔
 begin
   assume a b
   //print
@@ -110,7 +110,7 @@ begin
 end
 
 // This stupid test directly uses the addcomm lemma in two places.
-theorem rewriteTest3 : Πa b,
+opaque symbol rewriteTest3 : Πa b,
   P (eq nat (add (add (add a b) b) (add (add a b) b))
             (add (add (add b a) b) (add (add b a) b))) ≔
 begin
@@ -121,7 +121,7 @@ begin
 end
 
 // An easy contextual rewrite.
-theorem rewriteTest4 : Πa b,
+opaque symbol rewriteTest4 : Πa b,
   P (eq nat (add (add (add a b) (add a b)) a)
             (add (add (add b a) (add a b)) a)) ≔
 begin
@@ -131,7 +131,7 @@ begin
 end
 
 // A slightly more complicated contextual rewrite.
-theorem rewriteTest5 : Πa b,
+opaque symbol rewriteTest5 : Πa b,
   P (eq nat (add (add a b) (add a b)) (add (add b a) (add b a))) ≔
 begin
   assume a b
@@ -140,7 +140,7 @@ begin
 end
 
 // An even more complicated rewrite, combining both wildcards and binders.
-theorem rewriteTest6 : Πa b,
+opaque symbol rewriteTest6 : Πa b,
   P (eq nat (add (add (add a b) a) a) (add (add a (add a b)) a)) ≔
 begin
   // print
@@ -152,7 +152,7 @@ end
 // Example 17: Very trivial SSReflect example.
 symbol silly_axiom : Πm n, P (eq nat m n)
 
-theorem rewriteTest7 : Πa b c,
+opaque symbol rewriteTest7 : Πa b c,
  P (eq nat (add (add (add a b) c) (add a b))
            (add (add (add c b) c) (add a b))) ≔
 begin
@@ -162,7 +162,7 @@ begin
 end
 
 // Very trivial SSReflect example.
-theorem rewriteTest8 : Πa b c,
+opaque symbol rewriteTest8 : Πa b c,
  P (eq nat (add (add (add a b) c) (add a b))
            (add (add (add c b) c) (add a b))) ≔
 begin
@@ -171,7 +171,7 @@ begin
   refine refl nat (add (add (add c b) c) (add a b))
 end
 
-theorem rewriteTest9 : Πa b c,
+opaque symbol rewriteTest9 : Πa b c,
   P (eq nat (add (add a b) (add c (add a b)))
             (add (add a b) (add c (add b a)))) ≔
 begin
@@ -180,7 +180,7 @@ begin
   refine refl nat (add (add a b) (add c (add b a)))
 end
 
-theorem rewriteTest10 : Πa b c,
+opaque symbol rewriteTest10 : Πa b c,
   P (eq nat (add (add c (add a b)) (add (add a b) (add c (add a b))))
             (add (add c (add b a)) (add (add a b) (add c (add b a))))) ≔
 begin
@@ -189,7 +189,7 @@ begin
   refine refl nat (add (add c (add b a)) (add (add a b) (add c (add b a))))
 end
 
-theorem rewriteTest11 : Πa b c,
+opaque symbol rewriteTest11 : Πa b c,
   P (eq nat (add (add (add (add a b) c) (add (add a b) c)) (add (add a b) c))
             (add (add (add (add a b) c) (add (add b a) c)) (add (add a b) c))) ≔
 begin
@@ -199,7 +199,7 @@ begin
            (add (add b a) c)) (add (add a b) c))
 end
 
-theorem rewriteTest12 : Πa b c,
+opaque symbol rewriteTest12 : Πa b c,
   P (eq nat (add (add c (add a b)) (add (add a b) (add c (add a b))))
             (add (add c (add b a)) (add (add a b) (add c (add b a))))) ≔
 begin
