@@ -172,7 +172,6 @@ let _assertnot_  = KW.create "assertnot"
 let _begin_      = KW.create "begin"
 let _compute_    = KW.create "compute"
 let _constant_   = KW.create "constant"
-let _definition_ = KW.create "definition"
 let _end_        = KW.create "end"
 let _fail_       = KW.create "fail"
 let _focus_      = KW.create "focus"
@@ -197,7 +196,6 @@ let _simpl_      = KW.create "simpl"
 let _solve_      = KW.create "solve"
 let _sym_        = KW.create "symmetry"
 let _symbol_     = KW.create "symbol"
-let _theorem_    = KW.create "theorem"
 let _type_       = KW.create "type"
 let _TYPE_       = KW.create "TYPE"
 let _why3_       = KW.create "why3"
@@ -644,11 +642,6 @@ let do_require : Pos.pos -> p_module_path -> unit = fun loc path ->
   | e                             -> local_fatal "Uncaught exception: [%s]"
                                        (Printexc.to_string e)
 
-let parser symbol =
-  | _symbol_ -> [Pos.in_pos _loc (P_opaq(Nonopaque))]
-  | _definition_ -> [Pos.in_pos _loc (P_opaq(Nonopaque))]
-  | _theorem_ -> [Pos.in_pos _loc (P_opaq(Opaque))]
-
 (** [cmd] is a parser for a single command. *)
 let parser cmd =
   | _require_ o:{_open_ -> true}?[false] ps:path+
@@ -664,10 +657,9 @@ let parser cmd =
          ts_pe:proof?
       -> let st = Pos.in_pos _loc (s,al,Some(a)) in
          P_symbol(ms,st,None,ts_pe,Tac)
-  | ms:modifier* m:symbol s:ident al:arg* a:{":" term}? "≔" t:term?
+  | ms:modifier* _symbol_ s:ident al:arg* a:{":" term}? "≔" t:term?
          ts_pe:proof?
       -> let st = Pos.in_pos _loc (s,al,a) in
-         let ms = m @ ms in
          P_symbol(ms,st,t,ts_pe,Def)
   | _rule_ r:rule rs:{_:_with_ rule}*
       -> P_rules(r::rs)
