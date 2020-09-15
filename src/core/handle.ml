@@ -288,8 +288,13 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
       in
       let goals,sig_symbol,pdata_expo =
         let sort_goals, a = Proof.goals_of_typ x.pos ao t in
-(*         let goals_of_metas = Proof.goals_of_metas a in *)
-        let goals_of_metas = [] in
+        let goals_of_metas_in_type = Proof.goals_of_metas a in
+        let goals_of_metas_in_def =
+          match t with
+          | Some t -> Proof.goals_of_metas t
+          | None -> []
+        in
+        let goals_of_metas = goals_of_metas_in_type @ goals_of_metas_in_def in
         (* And the main "type" goal *)
         let typ_goal =
           match e with
