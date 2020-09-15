@@ -1,5 +1,5 @@
 set program lambdapi.bc
-set argument check tests/OK/foo.lp
+set argument check tests/OK/rehan.lp
 so sbhandle
 run
 set print_depth 500
