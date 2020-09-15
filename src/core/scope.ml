@@ -416,10 +416,12 @@ let scope : mode -> sig_state -> env -> p_term -> tbox = fun md ss env t ->
     state [ss] is used to handle module aliasing according to [find_qid]. If
     [?exp] is {!constructor:Public}, then the term mustn't contain any private
     subterms. *)
-let scope_term : expo -> sig_state -> env -> p_term -> term =
+let scope_term : expo -> sig_state -> env -> p_term -> term * MetaSet.t =
   fun expo ss env t ->
   let m = Stdlib.ref StrMap.empty in
-  Bindlib.unbox (scope (M_Term(m, expo)) ss env t)
+  let t = Bindlib.unbox (scope (M_Term(m, expo)) ss env t) in
+  let m = Basics.get_metas true t in
+  t,m
 
 (** [patt_vars t] returns a couple [(pvs,nl)]. The first compoment [pvs] is an
     association list giving the arity of all the “pattern variables” appearing

@@ -21,11 +21,11 @@ let handle_query : Sig_state.t -> Proof.t option -> p_query -> unit =
       let result =
         match asrt with
         | P_assert_typing(pt,pa) ->
-          let t = scope pt and a = scope pa and ctxt = Env.to_ctxt env in
+          let t,_ = scope pt and a,_ = scope pa and ctxt = Env.to_ctxt env in
           Typing.sort_type ctxt a;
           (try Typing.check ctxt t a with _ -> false)
         | P_assert_conv(pt,pu)   ->
-          let t = scope pt and u = scope pu in
+          let t,_ = scope pt and u,_ = scope pu in
           let infer = Typing.infer (Env.to_ctxt env) in
           match (infer t, infer u) with
           | (Some(a), Some(b)) ->
@@ -62,7 +62,7 @@ let handle_query : Sig_state.t -> Proof.t option -> p_query -> unit =
       out 3 "(flag) %s → %b\n" id b
   | P_query_infer(pt, cfg)            ->
       (* Infer the type of [t]. *)
-      let t = scope pt in
+      let t,_ = scope pt in
       let a =
         match Typing.infer (Env.to_ctxt env) t with
         | Some(a) -> Eval.eval cfg [] a
@@ -71,7 +71,7 @@ let handle_query : Sig_state.t -> Proof.t option -> p_query -> unit =
       out 3 "(infr) %a : %a\n" pp_term t pp_term a
   | P_query_normalize(pt, cfg)        ->
       (* Infer a type for [t], and evaluate [t]. *)
-      let t = scope pt in
+      let t,_ = scope pt in
       let v =
         match Typing.infer (Env.to_ctxt env) t with
         | Some(_) -> Eval.eval cfg [] t

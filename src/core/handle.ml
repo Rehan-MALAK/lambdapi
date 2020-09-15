@@ -217,7 +217,10 @@ let data_proof : sig_symbol -> p_command -> expo -> p_tactic list ->
     separately. Note that [Fatal] is raised in case of an error. *)
 let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
   fun ss cmd ->
-  let scope_basic exp = Scope.scope_term exp ss Env.empty in
+  let scope_basic exp p_t =
+    let t,m = Scope.scope_term exp ss Env.empty p_t in
+    t,m
+  in
   match cmd.elt with
   | P_require(b,ps)            ->
     let ps = List.map (List.map fst) ps in
@@ -252,13 +255,13 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
       fatal x.pos "Symbol [%s] already exists." x.elt;
     let data =
       (* Desugaring of arguments and scoping of [t]. *)
-      let p_t,t =
+      let p_t,t,metas_t =
         match t with
         | Some t ->
           let p_t = if xs = [] then t else Pos.none (P_Abst(xs, t)) in
-          let t = scope_basic expo p_t in
-          Some p_t, Some t
-        | None -> None, None
+          let t,meta_t = scope_basic expo p_t in
+          Some p_t, Some t, meta_t
+        | None -> None, None, MetaSet.empty
       in
       (* Desugaring of arguments and argument impliciteness. *)
       let (ao, impl) =
@@ -268,7 +271,13 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
           let a = if xs = [] then a else Pos.none (P_Prod(xs,a)) in
           (Some(a), Scope.get_implicitness a)
       in
-      let ao = Option.map (scope_basic expo) ao in
+      let ao,metas_a =
+        begin
+          match ao with
+          | Some ao -> let a,m = scope_basic expo ao in Some a, m
+          | None -> None, MetaSet.empty
+        end
+      in
       (* If a type [ao = Some a] is given, then we check that it is
          typable by a sort and that [t] has type [a]. Otherwise, we
              try to infer thetype of [t]. Unification goals are collected *)
@@ -286,27 +295,23 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
           | None,None -> [],p_end
         end
       in
+      let metas_t_a = MetaSet.union metas_t metas_a in
+      let add_goal m = List.insert Proof.Goal.compare (Proof.Goal.goal_typ_of_meta m) in
+      let typ_goals_from_metas = MetaSet.fold add_goal metas_t_a [] in
+      let typ_goals_from_metas = List.map Proof.Goal.typ typ_goals_from_metas in
       let goals,sig_symbol,pdata_expo =
         let sort_goals, a = Proof.goals_of_typ x.pos ao t in
-        let goals_of_metas_in_type = Proof.goals_of_metas a in
-        let goals_of_metas_in_def =
-          match t with
-          | Some t -> Proof.goals_of_metas t
-          | None -> []
-        in
-        let goals_of_metas = goals_of_metas_in_type @ goals_of_metas_in_def in
         (* And the main "type" goal *)
         let typ_goal =
           match e with
           | Def ->
             let proof_term = fresh_meta ~name:x.elt a 0 in
             let proof_goal = Proof.goal_of_meta proof_term in
-            [proof_goal] @ goals_of_metas
+            [proof_goal] @ typ_goals_from_metas
           | Tac ->
-            goals_of_metas
+            typ_goals_from_metas
         in
         let goals = sort_goals @ typ_goal in
-        wrn x.pos "DEBUG\n%a" (Mydebug.print_list Mydebug.comma Mydebug.print_goal) goals;
         let sig_symbol = {expo;prop;mstrat;ident=x;typ=a;impl;def=t} in
         (* Depending on opacity : theorem = false / definition = true *)
         let pdata_expo =

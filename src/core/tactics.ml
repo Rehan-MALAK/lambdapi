@@ -73,7 +73,7 @@ let handle_tactic :
       | Some gt -> Goal.get_type gt
       | None -> assert false
     in
-    let tt = Scope.scope_term e ss env t in
+    let tt,_ = Scope.scope_term e ss env t in
     env, tt
   in
 
