@@ -210,7 +210,7 @@ let pp_p_tactic : p_tactic pp = fun oc t ->
       out "why3%a" (Option.pp prover) p
   | P_tac_query(q)           -> pp_p_query oc q
   | P_tac_fail               -> out "fail"
-  | P_unif_solve             -> out "unif_solve" (* TODO *)
+  | P_unif_solve             -> out "solve"
 
 let pp_command : p_command pp = fun oc cmd ->
   let out fmt = Format.fprintf oc fmt in
@@ -227,16 +227,8 @@ let pp_command : p_command pp = fun oc cmd ->
       match (t,ts_pe) with
       | (Some _,_) | (_,Some _) ->
         let s,args,ao = st.elt in
-        let is_opaq {elt; _} =
-          match elt with
-          | P_opaq(Nonopaque) -> true
-          | _ -> false
-        in
-        let def_or_theo =
-          if List.exists is_opaq ms then "theorem" else "definition"
-        in
-        out "@[<hov 2>%a%s %a"
-          (Format.pp_print_list pp_modifier) ms def_or_theo pp_ident s;
+        out "@[<hov 2>%a symbol %a"
+          (Format.pp_print_list pp_modifier) ms pp_ident s;
         List.iter (out " %a" pp_p_arg) args;
         Option.iter (out " : @[<hov>%a@]" pp_p_term) ao;
         Option.iter (out " ≔ @[<hov>%a@]@]" pp_p_term) t;
