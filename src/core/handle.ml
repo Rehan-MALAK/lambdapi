@@ -301,7 +301,7 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
           | Def ->
             let proof_term = fresh_meta ~name:x.elt a 0 in
             let proof_goal = Proof.goal_of_meta proof_term in
-            goals_of_metas @ [proof_goal]
+            [proof_goal] @ goals_of_metas
           | Tac ->
             goals_of_metas
         in
