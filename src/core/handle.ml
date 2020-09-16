@@ -139,9 +139,9 @@ let handle_require_as : popt -> sig_state -> Path.t -> ident -> sig_state =
     with the proof script [ts pe]. [pdata_expo] sets the authorized exposition
     of the symbols used in the proof script : Public (= only public symbols)
     or Privat (= public and private symbols) *)
-let data_proof : sig_symbol -> p_command -> expo -> p_tactic list ->
+let data_proof : sig_symbol -> expo -> p_tactic list ->
   p_proof_end loc -> Proof.Goal.t list -> proof_data =
-  fun sig_symbol cmd pdata_expo ts pe goals ->
+  fun sig_symbol pdata_expo ts pe goals ->
   let ident = sig_symbol.ident in
   let typ   = sig_symbol.typ   in
   let def   = sig_symbol.def   in
@@ -156,7 +156,7 @@ let data_proof : sig_symbol -> p_command -> expo -> p_tactic list ->
     match pe.elt with
     | P_proof_abort ->
       (* Just ignore the command, with a warning. *)
-      wrn cmd.pos "Proof aborted."; ss
+      wrn pos "Proof aborted."; ss
     | _ ->
       let ps = Tactics.solve ps pos in
       (* We check that no metavariable remains. *)
@@ -184,10 +184,10 @@ let data_proof : sig_symbol -> p_command -> expo -> p_tactic list ->
       | P_proof_admit ->
         (* If the proof is finished, display a warning. *)
         if Proof.finished ps then
-          wrn cmd.pos "The proof is finished. You can use 'end' instead.";
+          wrn pos "The proof is finished. You can use 'end' instead.";
         (* Add a symbol corresponding to the proof, with a warning. *)
         out 3 "(symb) %s (admit)\n" ident.elt;
-        wrn cmd.pos "Proof admitted.";
+        wrn pos "Proof admitted.";
         add_symbol ss sig_symbol
       | P_proof_end   ->
         (* Check that the proof is indeed finished. *)
@@ -196,7 +196,7 @@ let data_proof : sig_symbol -> p_command -> expo -> p_tactic list ->
             let _ =
               Tactics.handle_tactic ss pdata_expo ps (none P_tac_print)
             in
-            fatal cmd.pos "The proof is not finished."
+            fatal pos "The proof is not finished."
           end;
         (* Add a symbol corresponding to the proof. *)
         out 3 "(symb) %s (end)\n" ident.elt;
@@ -341,7 +341,7 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
         in
         goals,sig_symbol,pdata_expo
       in
-      data_proof sig_symbol cmd pdata_expo ts pe goals
+      data_proof sig_symbol pdata_expo ts pe goals
     in
     (ss, Some(data))
   | P_rules(rs)                ->
