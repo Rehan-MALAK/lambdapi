@@ -73,11 +73,12 @@ let handle_tactic :
       | Some gt -> Goal.get_type gt
       | None -> assert false
     in
-    let tt,_ = Scope.scope_term e ss env t in
-    env, tt
+    let tt,metas_tt = Scope.scope_term e ss env t in
+    env, tt, metas_tt
   in
 
-  let handle_refine : Proof.t -> term -> Proof.t = fun ps t ->
+  let handle_refine : Proof.t -> term -> MetaSet.t -> Proof.t =
+    fun ps t _metas_t ->
     (* Check if the goal metavariable appears in [t]. *)
     let ((env, a), m) = match g with
       | Some gt -> (Goal.get_type gt),(Goal.get_meta gt)
@@ -122,14 +123,14 @@ let handle_tactic :
      in
      {ps with proof_goals = swap i [] ps.proof_goals}
   | P_tac_refine(t)     ->
-    let (_, tt) = scope t in
-      handle_refine ps tt
+    let (_, tt, metas_tt) = scope t in
+      handle_refine ps tt metas_tt
   | P_tac_intro(xs)     ->
       let t = Pos.none (P_Abst([(xs,None,false)], Pos.none P_Wild)) in
-      let _,tt = scope t in
-      handle_refine ps tt
+      let _,tt, metas_tt = scope t in
+      handle_refine ps tt metas_tt
   | P_tac_apply(pt)      ->
-      let env,t = scope pt in
+      let env,t,metas_t = scope pt in
       (* Infer the type of [t] and count the number of products. *)
       (* NOTE there is room for improvement here. *)
       let (a, to_solve) = Infer.infer (Env.to_ctxt env) t in
@@ -140,10 +141,11 @@ let handle_tactic :
       (* NOTE it is scoping that handles wildcards as metavariables. *)
       let rec add_wilds pt n =
         match n with
-        | 0 -> let _,tt = scope pt in tt
+        | 0 -> let _,tt,metas_tt = scope pt in tt,metas_tt
         | _ -> add_wilds (Pos.none (P_Appl(pt, Pos.none P_Wild))) (n-1)
       in
-      handle_refine ps (add_wilds pt nb)
+      let tt,metas_tt = add_wilds pt nb in
+      handle_refine ps tt (MetaSet.union metas_t metas_tt)
   | P_tac_simpl         ->
     begin
       match g with
@@ -156,19 +158,19 @@ let handle_tactic :
         ps
     end
   | P_tac_rewrite(b,po,t) ->
-    let env,tt = scope t in
+    let env,tt,metas_tt = scope t in
       let po = Option.map (Scope.scope_rw_patt ss env) po in
-      handle_refine ps (Rewrite.rewrite ss tac.pos ps b po tt)
+      handle_refine ps (Rewrite.rewrite ss tac.pos ps b po tt) metas_tt
   | P_tac_refl          ->
-      handle_refine ps (Rewrite.reflexivity ss tac.pos ps)
+      handle_refine ps (Rewrite.reflexivity ss tac.pos ps) MetaSet.empty
   | P_tac_sym           ->
-      handle_refine ps (Rewrite.symmetry ss tac.pos ps)
+      handle_refine ps (Rewrite.symmetry ss tac.pos ps) MetaSet.empty
   | P_tac_why3(config)  ->
     begin
       match g with
       | Some gt ->
         let t = Why3_tactic.handle ss tac.pos config (Goal.Typ gt) in
-        handle_refine ps t
+        handle_refine ps t MetaSet.empty
       | None -> wrn tac.pos "No goal typ" ; ps
     end
   | P_tac_fail          ->
