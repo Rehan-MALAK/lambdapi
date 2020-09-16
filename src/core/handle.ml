@@ -140,14 +140,13 @@ let handle_require_as : popt -> sig_state -> Path.t -> ident -> sig_state =
     of the symbols used in the proof script : Public (= only public symbols)
     or Privat (= public and private symbols) *)
 let data_proof : sig_symbol -> expo -> p_tactic list ->
-  p_proof_end loc -> Proof.Goal.t list -> proof_data =
-  fun sig_symbol pdata_expo ts pe goals ->
+  p_proof_end loc -> Proof.Goal.t list -> meta option -> proof_data =
+  fun sig_symbol pdata_expo ts pe goals proof_term ->
   let ident = sig_symbol.ident in
   let typ   = sig_symbol.typ   in
   let def   = sig_symbol.def   in
   let pos = ident.pos in
   (* Initialize proof state and save configuration data. *)
-  let proof_term = fresh_meta ~name:ident.elt typ 0 in
   let ps = Proof.{proof_name = ident ; proof_term ; proof_goals = goals} in
   Console.push_state ();
   (* Build proof checking data. *)
@@ -263,6 +262,7 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
           Some p_t, Some t, meta_t
         | None -> None, None, MetaSet.empty
       in
+      MetaSet.iter (function m -> wrn x.pos "DEBUG metas_t\n%a" Mydebug.print_meta m) metas_t ;
       (* Desugaring of arguments and argument impliciteness. *)
       let (ao, impl) =
         match ao with
@@ -278,6 +278,7 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
           | None -> None, MetaSet.empty
         end
       in
+      MetaSet.iter (function m -> wrn x.pos "DEBUG metas_a\n%a" Mydebug.print_meta m) metas_a ;
       (* If a type [ao = Some a] is given, then we check that it is
          typable by a sort and that [t] has type [a]. Otherwise, we
              try to infer thetype of [t]. Unification goals are collected *)
@@ -299,17 +300,17 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
       let add_goal m = List.insert Proof.Goal.compare (Proof.Goal.goal_typ_of_meta m) in
       let typ_goals_from_metas = MetaSet.fold add_goal metas_t_a [] in
       let typ_goals_from_metas = List.map Proof.Goal.typ typ_goals_from_metas in
-      let goals,sig_symbol,pdata_expo =
+      let proof_term,goals,sig_symbol,pdata_expo =
         let sort_goals, a = Proof.goals_of_typ x.pos ao t in
         (* And the main "type" goal *)
-        let typ_goal =
+        let proof_term,typ_goal =
           match e with
           | Def ->
             let proof_term = fresh_meta ~name:x.elt a 0 in
             let proof_goal = Proof.goal_of_meta proof_term in
-            [proof_goal] @ typ_goals_from_metas
+            Some proof_term,[proof_goal] @ typ_goals_from_metas
           | Tac ->
-            typ_goals_from_metas
+            None,typ_goals_from_metas
         in
         let goals = sort_goals @ typ_goal in
         let sig_symbol = {expo;prop;mstrat;ident=x;typ=a;impl;def=t} in
@@ -339,9 +340,9 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
                            be used in definitions."
           |     _, false, _      , _    , _      -> expo
         in
-        goals,sig_symbol,pdata_expo
+        proof_term,goals,sig_symbol,pdata_expo
       in
-      data_proof sig_symbol pdata_expo ts pe goals
+      data_proof sig_symbol pdata_expo ts pe goals proof_term
     in
     (ss, Some(data))
   | P_rules(rs)                ->

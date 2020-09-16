@@ -210,4 +210,4 @@ let print_goal fmt (a_g : Proof.Goal.t) =
 
 let print_state fmt (a_st : Proof.t) =
   let {elt=name;_} : Pos.strloc = a_st.proof_name in
-  fprintf fmt "\n#####STATE#####\nname=\"%s\"\nterm=%a\ngoals=\n%a\n" name print_meta a_st.proof_term (print_list comma print_goal) a_st.proof_goals
+  fprintf fmt "\n#####STATE#####\nname=\"%s\"\nterm=%a\ngoals=\n%a\n" name (print_option_or_default "no-proof-term" print_meta) a_st.proof_term (print_list comma print_goal) a_st.proof_goals

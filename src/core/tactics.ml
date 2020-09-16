@@ -37,10 +37,16 @@ let handle_tactic :
       (* Just print the current proof state. *)
       Console.out 1 "%a" pp_goals ps; ps
   | P_tac_proofterm     ->
-      (* Just print the current proof term. *)
-      let t = Meta(ps.proof_term, [||]) in
-      let name = ps.proof_name.elt in
-      Console.out 1 "Proof term for %s: %a\n" name pp_term t; ps
+    begin
+      match ps.proof_term with
+      | Some proof_term ->
+        (* Just print the current proof term. *)
+        let t = Meta(proof_term, [||]) in
+        let name = ps.proof_name.elt in
+        Console.out 1 "Proof term for %s: %a\n" name pp_term t; ps
+      | None ->
+        Console.out 1 "No proof term"; ps
+    end
   | P_tac_query(q)      ->
       Queries.handle_query ss (Some ps) q; ps
   | _                   ->

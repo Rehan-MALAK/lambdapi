@@ -150,7 +150,7 @@ and print_meta fmt (a_meta : Terms.meta) =
   | Some x -> let (_,unmbinded_term) = Bindlib.unmbind x in Some unmbinded_term
   | None -> None
   in
-  fprintf fmt "\"%a\"%d : %a,arity:%d,value binder:%a,value:%a" (print_option_or_default "?" pp_print_string) a_meta.meta_name a_meta.meta_key print_term (Timed.(!)(a_meta.meta_type)) a_meta.meta_arity (print_option print_bindlib_mbinder) a_meta_deref (print_option print_term) a_meta_deref_deoption_unbinded
+  fprintf fmt "%a%d : %a,arity:%d,value binder:%a,value:%a" (print_option_or_default "?" pp_print_string) a_meta.meta_name a_meta.meta_key print_term (Timed.(!)(a_meta.meta_type)) a_meta.meta_arity (print_option print_bindlib_mbinder) a_meta_deref (print_option print_term) a_meta_deref_deoption_unbinded
 
 (*
 and print_pp_hint fmt (a_pp_hint : Terms.pp_hint) =
@@ -240,5 +240,5 @@ let print_goal fmt (a_g : Proof.Goal.t) =
 let print_state fmt (a_st : Proof.t) =
   put_console_debug_on ();
   let {elt=name;_} : Pos.strloc = a_st.proof_name in
-  fprintf fmt "\n#####STATE#####\nname=\"%s\"\nterm=%a\ngoals=\n%a\n" name print_meta a_st.proof_term (print_list comma print_goal) a_st.proof_goals;
+  fprintf fmt "\n#####STATE#####\nname=\"%s\"\nterm=%a\ngoals=\n%a\n" name (print_option_or_default "no-proof-term" print_meta) a_st.proof_term (print_list comma print_goal) a_st.proof_goals;
   put_console_debug_default ()
