@@ -56,6 +56,7 @@ breakpoints=(
   "sort_type src/core/typing.ml"
   "solve src/core/unif.ml"
   "eq src/core/unif.ml"
+  "data_proof src/core/handle.ml"
 )
 
 function uppercasefirst ()
