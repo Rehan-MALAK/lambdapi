@@ -298,6 +298,7 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
       in
 (*       let metas_t_a = MetaSet.union metas_t metas_a in *)
       let metas_t_a = MetaSet.union MetaSet.empty metas_a in
+(*       let metas_t_a = MetaSet.empty in *)
       let add_goal m = List.insert Proof.Goal.compare (Proof.Goal.goal_typ_of_meta m) in
       let typ_goals_from_metas = MetaSet.fold add_goal metas_t_a [] in
       let typ_goals_from_metas = List.map Proof.Goal.typ typ_goals_from_metas in
