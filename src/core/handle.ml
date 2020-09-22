@@ -296,11 +296,22 @@ let handle_cmd : sig_state -> p_command -> sig_state * proof_data option =
           | None,None -> [],p_end
         end
       in
-(*       let metas_t_a = MetaSet.union metas_t metas_a in *)
-      let metas_t_a = MetaSet.union MetaSet.empty metas_a in
-(*       let metas_t_a = MetaSet.empty in *)
+(*
+      let metas_a_t = MetaSet.union metas_a metas_t  in
+      wrn cmd.pos "version with METAS_A and METAS_A";
+*)
+      let metas_a_t = MetaSet.union metas_a MetaSet.empty in
+      wrn cmd.pos "version with METAS_A            ";
+(*
+      let metas_a_t = MetaSet.union MetaSet.empty metas_t in
+      wrn cmd.pos "version with             METAS_T";
+*)
+(*
+      let metas_a_t = MetaSet.empty in
+      wrn cmd.pos "version without any more METAS...";
+*)
       let add_goal m = List.insert Proof.Goal.compare (Proof.Goal.goal_typ_of_meta m) in
-      let typ_goals_from_metas = MetaSet.fold add_goal metas_t_a [] in
+      let typ_goals_from_metas = MetaSet.fold add_goal metas_a_t [] in
       let typ_goals_from_metas = List.map Proof.Goal.typ typ_goals_from_metas in
       let proof_term,goals,sig_symbol,pdata_expo =
         let sort_goals, a = Proof.goals_of_typ x.pos ao t in
