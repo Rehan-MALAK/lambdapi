@@ -183,7 +183,8 @@ let pp_goals : proof_state pp = fun oc ps ->
           List.iter print_hyp (List.rev hyps);
           Format.fprintf oc "   --------------------------------------\n"
         end;
-      Format.fprintf oc "Typ  0. %a %a\n" Print.pp_meta g.goal_meta pp_term a;
+      let t = Terms.Meta(g.goal_meta,[||]) in
+      Format.fprintf oc "Typ  0. meta %a unfold %a precomputed %a\n" Print.pp_meta g.goal_meta Print.pp_term t pp_term a;
       if gs <> [] then
         begin
           Format.fprintf oc "\n";
@@ -191,7 +192,8 @@ let pp_goals : proof_state pp = fun oc ps ->
             match g with
             | Goal.Typ g ->
               let (_, a) = Goal.get_type g in
-              Format.fprintf oc "Typ  %i. %a %a\n" (i+1) Print.pp_meta g.goal_meta pp_term a
+              let t = Terms.Meta(g.goal_meta,[||]) in
+              Format.fprintf oc "Typ  %i. meta %a unfold %a precomputed %a\n" (i+1) Print.pp_meta g.goal_meta Print.pp_term t pp_term a
             | Goal.Unif cs ->
               Format.fprintf oc "Unif %i. %a\n" (i+1) pp_constr cs
           in
@@ -205,7 +207,8 @@ let pp_goals : proof_state pp = fun oc ps ->
             match g with
             | Goal.Typ g ->
               let (_, a) = Goal.get_type g in
-              Format.fprintf oc "Typ  %i. %a %a\n" (i+1) Print.pp_meta g.goal_meta pp_term a
+              let t = Terms.Meta(g.goal_meta,[||]) in
+              Format.fprintf oc "Typ  %i. meta %a unfold %a precomputed %a\n" (i+1) Print.pp_meta g.goal_meta Print.pp_term t pp_term a
             | Goal.Unif cs ->
               Format.fprintf oc "Unif %i. %a\n" (i+1) pp_constr cs
           in
