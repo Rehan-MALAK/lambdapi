@@ -142,7 +142,7 @@ and print_sym fmt (a_sym : Terms.sym) =
 and print_meta fmt (a_meta : Terms.meta) =
 (*
   let a_meta_deref = Timed.(!) a_meta.meta_value in
-  fprintf fmt "\"%a\" : %a,arity:%d,value:%a" (print_option_or_default "?" pp_print_string) a_meta.meta_name print_term (Timed.(!)(a_meta.meta_type)) a_meta.meta_arity (print_option print_bindlib_mbinder) a_meta_deref
+  fprintf fmt "%a%d : %a,arity:%d,value:%a" (print_option_or_default "?" pp_print_string) a_meta.meta_name a_meta.meta_key print_term (Timed.(!)(a_meta.meta_type)) a_meta.meta_arity (print_option print_bindlib_mbinder) a_meta_deref
 *)
 (* NOT ALLOWED IN OCAMLDEBUG *)
   let a_meta_deref = Timed.(!) a_meta.meta_value in
