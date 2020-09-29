@@ -83,6 +83,17 @@ let handle_tactic :
     env, tt, metas_tt
   in
 
+  let update_goals : Goal.t -> Goal.t list = function
+    | Goal.Typ gt -> let ((_env, _a), m) = (Goal.get_type gt),(Goal.get_meta gt) in
+      let t = Terms.Meta(m,[||]) in
+      let t = unfold t in
+      let metas = Basics.get_metas true t in
+      let add_goal m = List.insert Goal.compare (Goal.goal_typ_of_meta m) in
+      let new_typ_goals = MetaSet.fold add_goal metas [] in
+      List.map Goal.typ new_typ_goals
+    | Goal.Unif _ as gu -> [gu]
+  in
+
   let handle_refine : Proof.t -> term -> MetaSet.t -> Proof.t =
     fun ps t _metas_t ->
     (* Check if the goal metavariable appears in [t]. *)
@@ -108,6 +119,7 @@ let handle_tactic :
     let add_goal m = List.insert Goal.compare (Goal.goal_typ_of_meta m) in
     let new_typ_goals = MetaSet.fold add_goal metas [] in
     (* New goals must appear first. *)
+    let post_g = List.concat (List.map update_goals post_g) in
     let proof_goals =
       pre_g @ gs_unif @ (List.map Goal.typ new_typ_goals) @ post_g
     in

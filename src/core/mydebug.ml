@@ -145,12 +145,13 @@ and print_meta fmt (a_meta : Terms.meta) =
   fprintf fmt "%a%d : %a,arity:%d,value:%a" (print_option_or_default "?" pp_print_string) a_meta.meta_name a_meta.meta_key print_term (Timed.(!)(a_meta.meta_type)) a_meta.meta_arity (print_option print_bindlib_mbinder) a_meta_deref
 *)
 (* NOT ALLOWED IN OCAMLDEBUG *)
+  let t = Terms.Meta(a_meta,[||]) in
   let a_meta_deref = Timed.(!) a_meta.meta_value in
   let a_meta_deref_deoption_unbinded = match a_meta_deref with
   | Some x -> let (_,unmbinded_term) = Bindlib.unmbind x in Some unmbinded_term
   | None -> None
   in
-  fprintf fmt "%a%d : %a,arity:%d,value binder:%a,value:%a" (print_option_or_default "?" pp_print_string) a_meta.meta_name a_meta.meta_key print_term (Timed.(!)(a_meta.meta_type)) a_meta.meta_arity (print_option print_bindlib_mbinder) a_meta_deref (print_option print_term) a_meta_deref_deoption_unbinded
+  fprintf fmt "%a%d : %a,arity:%d,value binder:%a,value:%a,??unfold meta??:%a" (print_option_or_default "?" pp_print_string) a_meta.meta_name a_meta.meta_key print_term (Timed.(!)(a_meta.meta_type)) a_meta.meta_arity (print_option print_bindlib_mbinder) a_meta_deref (print_option print_term) a_meta_deref_deoption_unbinded Print.pp_term t
 
 (*
 and print_pp_hint fmt (a_pp_hint : Terms.pp_hint) =

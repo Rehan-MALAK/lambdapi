@@ -9,39 +9,21 @@ set verbose 3
 set debug +u
 // theorem trivial : Π A, eU A → eU A
 // proof
-//   // solve
-//   print
+// print
 //   assume a
-//   print
-//   assume p_a
-//   print
-//   apply p_a
-//   print
+// print
+//   assume ea 
+// print
+//   apply ea 
 // qed
-symbol trivial : Π A, eU A → eU A ≔
+symbol trivial : Π A , eU A → eU A ≔
 begin
   print
+  solve
+  print
   assume a
+  print
   assume ea
+  print
   apply ea
-//   focus 2
-//   print
-//   assume a
-//   print
-//   focus 1
-//   print
-//   assume ea
-//   print
-//   focus 1
-//   print
-//   apply ea
-//   print
-//   solve
-//   print
-// //   assume a
-//   print
-//   focus 3
-//   print
-//   assume ea
-//   print
 end
